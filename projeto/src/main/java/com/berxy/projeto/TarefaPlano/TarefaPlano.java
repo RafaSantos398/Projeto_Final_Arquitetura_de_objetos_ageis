@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Objects;
 
 @Entity
 @Table(
@@ -54,13 +53,13 @@ public class TarefaPlano {
             PlanoIntercambio plano,
             ModeloTarefa modeloOrigem
     ) {
-        this.plano = Objects.requireNonNull(
-                plano, "O plano é obrigatório."
-        );
+        if (plano == null) {
+            throw new IllegalArgumentException("O plano é obrigatório.");
+        }
 
-        this.modeloOrigem = Objects.requireNonNull(
-                modeloOrigem, "O modelo de tarefa é obrigatório."
-        );
+        if (modeloOrigem == null) {
+            throw new IllegalArgumentException("O modelo de tarefa é obrigatório.");
+        }
 
         if (!modeloOrigem.isAtivo()) {
             throw new IllegalArgumentException(
@@ -68,9 +67,14 @@ public class TarefaPlano {
             );
         }
 
+        this.plano = plano;
+        this.modeloOrigem = modeloOrigem;
         this.titulo = modeloOrigem.getTitulo();
         this.descricao = modeloOrigem.getDescricao();
         this.status = StatusTarefa.PENDENTE;
+
+        // Mantém os dois lados da associação consistentes em memória.
+        plano.adicionarTarefa(this);
     }
 
     public void iniciar() {
