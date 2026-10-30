@@ -1,6 +1,5 @@
 package com.berxy.projeto.AreaEstudo;
 
-import com.berxy.projeto.ModeloTarefa.ModeloTarefa;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

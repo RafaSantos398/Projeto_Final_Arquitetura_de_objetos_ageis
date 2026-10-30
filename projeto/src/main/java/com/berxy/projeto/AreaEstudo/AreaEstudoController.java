@@ -1,7 +1,5 @@
 package com.berxy.projeto.AreaEstudo;
 
-import com.berxy.projeto.ModeloTarefa.ModeloTarefa;
-import com.berxy.projeto.ModeloTarefa.ModeloTarefaRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

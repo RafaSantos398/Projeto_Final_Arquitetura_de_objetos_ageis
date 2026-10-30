@@ -1,10 +1,7 @@
 package com.berxy.projeto.AreaEstudo;
 
 
-import com.berxy.projeto.ModeloTarefa.CategoriaTarefa;
 import jakarta.persistence.*;
-
-import java.util.Objects;
 
 @Entity
 @Table(name = "area_estudo")
