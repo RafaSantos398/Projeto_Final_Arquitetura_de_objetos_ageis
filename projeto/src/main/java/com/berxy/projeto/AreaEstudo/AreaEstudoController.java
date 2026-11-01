@@ -12,32 +12,25 @@ public class AreaEstudoController {
 
     @Autowired
     private AreaEstudoService areaEstudoService;
-
     @GetMapping
-    public List<AreaEstudo> list(){return areaEstudoService.list();}
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public AreaEstudo salvar(@RequestBody AreaEstudoRequest dados) {
-        return areaEstudoService.adicionarArea(
-                dados.nome(),
-                dados.descricao()
-        );
+    public List<AreaEstudo> listar() {
+        return areaEstudoService.listar();
     }
 
     @GetMapping("/{idArea}")
-    public AreaEstudo buscar(@PathVariable Long idArea){
-        return areaEstudoService.GetByid(idArea);
+    public AreaEstudo buscar(@PathVariable Long idArea) {
+        return areaEstudoService.buscarPorId(idArea);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public AreaEstudo cadastrar(@RequestBody AreaEstudoRequest dados) {
+        return areaEstudoService.cadastrar(dados.nome(), dados.descricao());
     }
 
     @PutMapping("/{idArea}")
-    @ResponseStatus(HttpStatus.OK)
-    public AreaEstudo Atualizar(@RequestBody AreaEstudoRequest dados,
-                                  @PathVariable Long idArea){
-        return areaEstudoService.atualizarArea(idArea,dados.nome(), dados.descricao());}
-
-
-
-
+    public AreaEstudo atualizar(@PathVariable Long idArea, @RequestBody AreaEstudoRequest dados) {
+        return areaEstudoService.atualizar(idArea, dados.nome(), dados.descricao());
+    }
 
 }

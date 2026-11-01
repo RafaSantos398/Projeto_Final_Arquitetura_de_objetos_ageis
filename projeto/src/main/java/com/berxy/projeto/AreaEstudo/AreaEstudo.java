@@ -23,9 +23,9 @@ public class AreaEstudo {
             String nome,
             String descricao
     ) {
-        String nomeValidado = validarTexto(nome, "Título", 200);
+        String nomeValidado = validarTexto(nome, "Nome", 100, true);
         String descricaoValidada = validarTexto(
-                descricao, "Descrição", 400
+                descricao, "Descrição", 500, false
         );
 
 
@@ -34,56 +34,39 @@ public class AreaEstudo {
         this.descricao = descricaoValidada;
     }
 
-    private static String validarTexto(
-            String valor,
-            String campo,
-            int tamanhoMaximo
-    ) {
+    // considera se for opcional ou obrigatório no true
+    private static String validarTexto(String valor, String campo, int max, boolean obrigatorio) {
         if (valor == null || valor.isBlank()) {
-            throw new IllegalArgumentException(
-                    campo + " não pode ficar vazio."
-            );
+            if (obrigatorio) {
+                throw new IllegalArgumentException(campo + " não pode ficar vazio.");
+            }
+            return null;
         }
-
         String texto = valor.strip();
-
-        if (texto.length() > tamanhoMaximo) {
+        if (texto.length() > max) {
             throw new IllegalArgumentException(
-                    campo + " deve ter no máximo "
-                            + tamanhoMaximo + " caracteres."
-            );
+                    campo + " deve ter no máximo " + max + " caracteres.");
         }
-
         return texto;
     }
 
 
     public AreaEstudo(String nome, String descricao) {
+        atualizarArea(nome, descricao);
     }
 
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getNome() {
         return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
     }
 
     public String getDescricao() {
         return descricao;
     }
 
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
+    public AreaEstudo() {
     }
-
-
 }
