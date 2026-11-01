@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 
 import java.beans.ConstructorProperties;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Set;
 import  java.util.List;
 
@@ -34,12 +35,15 @@ public class PerfilINtercambista {
     @Column(nullable = false )
     private String paisResidencia;
 
-    @Column(nullable = false)
-    private List<ProficienciaIdioma> proficienciaIdioma;
+    @ElementCollection
+    @CollectionTable(name = "perfil_proficiencia_idioma", joinColumns = @JoinColumn(name = "perfil_id"))
+    private List<ProficienciaIdioma> proficienciaIdioma = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SituacaoEscolaridade situacaoEscolaridade;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NivelEscolaridade nivelEscolaridade;
 
