@@ -4,56 +4,115 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 
-@Entity //faz a classe ser gerenciada pelo
+@Entity
 @Table(name = "users")
 public class User {
 
-
-    @Id //mapeia o atributo para uma chave primaria
-    @GeneratedValue(strategy = GenerationType.IDENTITY) //Define como o identificador é gerado
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 100)
     private String nome;
 
-
     @Column(nullable = false, unique = true, length = 254)
     private String email;
 
-    @Column(nullable = false, name="passowrd_hash")
-    private String passowrdHash;
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false,length = 20)
-    private Role role;
+    @Column(nullable = false, length = 20)
+    private Role role = Role.USER;
 
     @Column(nullable = false)
-    private boolean active;
+    private boolean active = true;
 
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt
-            ;
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    // Exigido pelo JPA
+    protected User() {
+    }
+
+    public User(String nome, String email, String passwordHash) {
+        this.nome = nome;
+        this.email = email;
+        this.passwordHash = passwordHash;
+    }
 
     @PrePersist
-    private void beforeInsert(){
-
+    private void beforeInsert() {
         Instant now = Instant.now();
-
-        this.updatedAt= now;
         this.createdAt = now;
-
-        if (this.role == null){
-            this.role = Role.USER;
-        }
-
-        this.active = true;
+        this.updatedAt = now;
     }
 
     @PreUpdate
-    private void beforeUpdate(){
+    private void beforeUpdate() {
         this.updatedAt = Instant.now();
+    }
+
+    // Getters
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    // Setters (apenas para campos que podem mudar)
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
     }
 }
