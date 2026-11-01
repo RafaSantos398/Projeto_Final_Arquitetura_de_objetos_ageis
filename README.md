@@ -57,3 +57,55 @@ PostgreSQL ainda precisa ser validada.
 O enunciado limita o uso de IA no back-end a suporte. O grupo deve revisar e
 adequar esta implementação às regras da disciplina, compreendendo as decisões
 antes de incorporá-la à entrega.
+
+## Perfil do intercambista (Joao)
+
+O perfil compartilha o ID do usuario por `@MapsId`. O usuario deve existir e estar
+ativo. Cada usuario possui no maximo um perfil. A resposta inclui apenas os dados
+do perfil, sem serializar o usuario e sua senha.
+
+| Metodo | Rota | Resultado |
+| --- | --- | --- |
+| POST | `/users/{usuarioId}/perfil` | Cria perfil (201); duplicado retorna 409 |
+| GET | `/users/{usuarioId}/perfil` | Consulta perfil (200) |
+| PUT | `/users/{usuarioId}/perfil` | Substitui os dados do perfil (200) |
+
+Usuario ou perfil inexistente retorna 404; dados invalidos retornam 400.
+Exemplo de corpo para POST e PUT:
+
+```json
+{
+  "nascimento": "2000-01-01",
+  "nacionalidades": ["Brasileira"],
+  "paisResidencia": "Brasil",
+  "proficienciaIdioma": [{"idioma": "en", "nivel": "B1"}],
+  "situacaoEscolaridade": "CURSANDO",
+  "nivelEscolaridade": "GRADUACAO"
+}
+```
+
+Nascimento deve estar no passado; nacionalidades devem conter ao menos um texto.
+Pais e nacionalidades aceitam ate 100 caracteres e sao aparados nas extremidades.
+Proficiencias podem ser uma lista vazia; cada item exige idioma e nivel. Idiomas
+usam codigos de duas letras, opcionalmente com regiao (en, fr, pt-BR), normalizados
+para minusculas e sem repeticao. O nivel usa o mesmo `NivelProficiencia` de
+PreparacaoIdioma: A1, A2, B1, B2, C1, C2.
+Escolaridade: ENSINO_FUNDAMENTAL, ENSINO_MEDIO, GRADUACAO, POS_GRADUACAO,
+MESTRADO ou DOUTORADO; situacao: CURSANDO, CONCLUIDO ou INTERROMPIDO.
+PUT substitui as colecoes; todos os campos sao obrigatorios. A validacao completa
+ocorre antes de modificar o perfil.
+
+O mapeamento das nacionalidades passa a usar `perfil_nacionalidades`, coluna
+`nacionalidade`. Bancos que ja tenham dados na antiga colecao implicita precisam
+migrar esses dados antes de usar esta versao.
+
+A configuracao de seguranca atual libera as rotas. A restricao ao dono do perfil
+depende da entrega compartilhada de autenticacao; o ID na URL nao autentica o usuario.
+Os testes `PerfilControllerTest` cobrem API, persistencia das colecoes, ID
+compartilhado, atualizacao, duplicidade e entradas invalidas. Dependem da compilacao
+completa do projeto e de suas entidades, incluindo Curso.
+
+Validacao desta entrega (01/11/2026): Maven executado com JDK 26.0.2.
+A compilacao completa falhou pelas dependencias ausentes `Curso` e `StatusTarefa`;
+os testes nao chegaram a executar. Reexecutar `./mvnw.cmd test` apos integrar essas
+entregas. A API e a persistencia do perfil ainda aguardam essa validacao integrada.
