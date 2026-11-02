@@ -142,6 +142,13 @@ public class TarefaPlanoService {
     }
 
     @Transactional
+    public TarefaPlano mover(Long planoId, Long id, StatusTarefa status) {
+        TarefaPlano tarefa = GetByid(planoId, id);
+        tarefa.moverPara(status);
+        return tarefaPlanoRepository.save(tarefa);
+    }
+
+    @Transactional
     public TarefaPlano concluir(Long planoId, Long id) {
         TarefaPlano tarefa = GetByid(planoId, id);
         tarefa.concluir();

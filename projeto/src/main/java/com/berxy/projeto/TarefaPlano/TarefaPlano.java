@@ -161,6 +161,13 @@ public class TarefaPlano {
         this.prazo = prazo;
     }
 
+    public void moverPara(StatusTarefa destino) {
+        if (destino == null) { throw new IllegalArgumentException("O status é obrigatório."); }
+        if (status == destino) { return; }
+        status = destino;
+        concluidaEm = destino == StatusTarefa.CONCLUIDA ? Instant.now() : null;
+    }
+
     public Long getId() {
         return id;
     }

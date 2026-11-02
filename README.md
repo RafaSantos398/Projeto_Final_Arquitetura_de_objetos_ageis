@@ -521,6 +521,14 @@ e FRONTEND_ORIGINS configurados fora do repositório.
 
 ## Checklists por tema e finanças — 02/11/2026
 
+O quadro compacto do frontend usa PATCH /planos-intercambio/{id}/tarefas/{idTarefa}/status
+com {"status":"PENDENTE"}, EM_ANDAMENTO ou CONCLUIDA. A mudança entre quaisquer
+colunas é feita em uma transação e continua restrita ao dono do plano ou ADMIN.
+Concluir novamente preserva concluidaEm; sair de Concluída limpa esse campo.
+Os endpoints anteriores de iniciar/concluir/reabrir continuam compatíveis.
+Sem migração de banco nesta atualização. A suíte passou com 69 testes, incluindo
+todos os pares de status, status inválido e isolamento entre planos e usuários.
+
 O plano agora funciona sem curso cadastrado: seis temas oferecem 24 sugestões
 (documentação, finanças, moradia, viagem, idioma e estudos). O usuário também
 pode criar, editar e remover tarefas próprias. Adicionar novamente um tema

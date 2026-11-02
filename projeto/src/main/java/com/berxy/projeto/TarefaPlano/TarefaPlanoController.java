@@ -14,6 +14,12 @@ public class TarefaPlanoController {
     @Autowired
     private TarefaPlanoService tarefaPlanoService;
 
+    @PatchMapping("/{idTarefa}/status")
+    public TarefaPlanoResponse mover(@PathVariable("idPlano") Long idPlano,
+            @PathVariable("idTarefa") Long idTarefa, @RequestBody TarefaPlanoRequest.StatusRequest dados) {
+        return TarefaPlanoResponse.de(tarefaPlanoService.mover(idPlano, idTarefa, dados.status()));
+    }
+
     @GetMapping("/temas")
     public List<TemaChecklist.Resposta> temas(@PathVariable("idPlano") Long idPlano) {
         return tarefaPlanoService.temas(idPlano);

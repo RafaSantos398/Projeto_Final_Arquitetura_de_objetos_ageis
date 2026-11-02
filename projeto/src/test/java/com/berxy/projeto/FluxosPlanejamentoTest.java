@@ -99,6 +99,49 @@ class FluxosPlanejamentoTest {
     }
 
     @Test
+    void quadroPermiteTodasAsMovimentacoesEPreservaConclusaoRepetida() throws Exception {
+        Cenario c = cenario(false);
+        mvc.perform(post(rota(c)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titulo\":\"Mover no quadro\",\"categoria\":\"OUTROS\"}"))
+                .andExpect(status().isCreated());
+        Long id = tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).getFirst().getId();
+        String path = rota(c) + "/" + id + "/status";
+        for (String destino : java.util.List.of("EM_ANDAMENTO", "PENDENTE", "CONCLUIDA", "EM_ANDAMENTO", "CONCLUIDA", "PENDENTE", "CONCLUIDA")) {
+            mvc.perform(patch(path).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"status\":\"" + destino + "\"}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.status").value(destino));
+            assertEquals(destino.equals("CONCLUIDA"), tarefas.findById(id).orElseThrow().getConcluidaEm() != null);
+        }
+        Instant conclusao = tarefas.findById(id).orElseThrow().getConcluidaEm();
+        mvc.perform(patch(path).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"CONCLUIDA\"}"))
+                .andExpect(status().isOk());
+        assertEquals(conclusao, tarefas.findById(id).orElseThrow().getConcluidaEm());
+        mvc.perform(patch(path).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(patch(path).contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"INVALIDO\"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get(rota(c) + "/{id}", id)).andExpect(jsonPath("$.status").value("CONCLUIDA"));
+    }
+
+    @Test
+    void movimentacaoNaoPermiteAlterarTarefaDeOutroPlanoOuUsuario() throws Exception {
+        Cenario c = cenario(false);
+        Cenario outroPlano = cenario(false);
+        mvc.perform(post(rota(c)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titulo\":\"Privada\",\"categoria\":\"OUTROS\"}"))
+                .andExpect(status().isCreated());
+        Long id = tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).getFirst().getId();
+        mvc.perform(patch(rota(outroPlano) + "/{id}/status", id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"CONCLUIDA\"}")).andExpect(status().isNotFound());
+        String token = context.getBean(com.berxy.projeto.security.JwtService.class)
+                .generateToken(usuarios.findById(outroPlano.usuarioId()).orElseThrow().getEmail());
+        mvc.perform(patch(rota(c) + "/{id}/status", id).header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"CONCLUIDA\"}"))
+                .andExpect(status().isForbidden());
+        assertEquals(com.berxy.projeto.TarefaPlano.StatusTarefa.PENDENTE, tarefas.findById(id).orElseThrow().getStatus());
+    }
+
+    @Test
     void temasSemCursoPreservamTarefasEditadasEConclusoesSemDuplicar() throws Exception {
         Cenario c = cenario(false);
         mvc.perform(get(rota(c) + "/temas")).andExpect(status().isOk())
