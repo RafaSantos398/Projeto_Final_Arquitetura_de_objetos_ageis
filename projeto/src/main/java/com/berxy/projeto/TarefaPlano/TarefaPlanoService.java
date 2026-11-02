@@ -35,6 +35,45 @@ public class TarefaPlanoService {
         return tarefaPlanoRepository.findByPlanoIdOrderByIdAsc(planoId);
     }
 
+    public List<TemaChecklist.Resposta> temas(Long planoId) {
+        planoIntercambioService.GetByid(planoId);
+        return java.util.Arrays.stream(TemaChecklist.values()).map(TemaChecklist.Resposta::de).toList();
+    }
+
+    @Transactional
+    public List<TarefaPlano> gerarTemas(Long planoId, List<TemaChecklist> temas) {
+        if (temas == null || temas.isEmpty() || temas.contains(null)) {
+            throw new IllegalArgumentException("Selecione pelo menos um tema válido.");
+        }
+        PlanoIntercambio plano = planoIntercambioService.bloquearPlano(planoId);
+        for (TemaChecklist tema : temas.stream().distinct().toList()) {
+            for (TemaChecklist.Sugestao sugestao : tema.getSugestoes()) {
+                if (!tarefaPlanoRepository.existsByPlanoIdAndChaveSugestao(planoId, tema.name() + ":" + sugestao.chave())) {
+                    tarefaPlanoRepository.save(TarefaPlano.sugerida(plano, tema, sugestao));
+                }
+            }
+        }
+        return tarefaPlanoRepository.findByPlanoIdOrderByIdAsc(planoId);
+    }
+
+    @Transactional
+    public TarefaPlano criar(Long planoId, TarefaPlanoRequest.ConteudoRequest dados) {
+        PlanoIntercambio plano = planoIntercambioService.GetByid(planoId);
+        return tarefaPlanoRepository.save(new TarefaPlano(plano, dados.titulo(), dados.descricao(), dados.categoria(), dados.prazo()));
+    }
+
+    @Transactional
+    public TarefaPlano atualizar(Long planoId, Long id, TarefaPlanoRequest.ConteudoRequest dados) {
+        TarefaPlano tarefa = GetByid(planoId, id);
+        tarefa.atualizarConteudo(dados.titulo(), dados.descricao(), dados.categoria(), dados.prazo());
+        return tarefaPlanoRepository.save(tarefa);
+    }
+
+    @Transactional
+    public void remover(Long planoId, Long id) {
+        tarefaPlanoRepository.delete(GetByid(planoId, id));
+    }
+
     public TarefaPlano GetByid(Long planoId, Long id) {
         planoIntercambioService.GetByid(planoId);
         return tarefaPlanoRepository.findByIdAndPlanoId(id, planoId)

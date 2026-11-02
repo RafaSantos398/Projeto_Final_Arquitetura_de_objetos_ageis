@@ -14,6 +14,17 @@ public class PlanoIntercambioController {
     @Autowired
     private PlanoIntercambioService planoIntercambioService;
 
+    @GetMapping("/{idPlano}/financeiro")
+    public PlanejamentoFinanceiro consultarFinancas(@PathVariable("idPlano") Long idPlano) {
+        return planoIntercambioService.consultarFinancas(idPlano);
+    }
+
+    @PutMapping("/{idPlano}/financeiro")
+    public PlanejamentoFinanceiro atualizarFinancas(@PathVariable("idPlano") Long idPlano,
+            @RequestBody PlanejamentoFinanceiro.Request dados) {
+        return planoIntercambioService.atualizarFinancas(idPlano, dados);
+    }
+
     @Autowired
     private com.berxy.projeto.security.AcessoService acesso;
 

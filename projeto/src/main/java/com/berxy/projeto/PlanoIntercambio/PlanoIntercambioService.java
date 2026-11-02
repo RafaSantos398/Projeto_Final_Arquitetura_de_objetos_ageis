@@ -86,4 +86,21 @@ public class PlanoIntercambioService {
         plano.alterarStatus(status);
         return planoIntercambioRepository.save(plano);
     }
+
+    public PlanoIntercambio bloquearPlano(Long id) {
+        return planoIntercambioRepository.bloquearPorId(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plano não encontrado."));
+    }
+
+    @Transactional(readOnly = true)
+    public PlanejamentoFinanceiro consultarFinancas(Long id) {
+        return PlanejamentoFinanceiro.de(GetByid(id), LocalDate.now());
+    }
+
+    public PlanejamentoFinanceiro atualizarFinancas(Long id, PlanejamentoFinanceiro.Request dados) {
+        PlanoIntercambio plano = GetByid(id);
+        plano.atualizarFinancas(dados.metaTotal(), dados.valorGuardado(), dados.aporteMensal());
+        planoIntercambioRepository.save(plano);
+        return PlanejamentoFinanceiro.de(plano, LocalDate.now());
+    }
 }

@@ -7,6 +7,12 @@ O serviço berxy-api está Live, no plano Free, em Oregon, usando Docker e o
 PostgreSQL existente. Commit publicado: 256ba59, branch feat/tarefasplano.
 A mesma versão do código também foi enviada para main.
 
+Frontend publicado: **https://berxy.vercel.app**. Essa origem foi adicionada
+a FRONTEND_ORIGINS no painel do Render e aplicada por Save and deploy, com a
+imagem existente do commit 256ba59. Preflight da Vercel retorna 200, API sem
+token e login inexistente retornam 401 com CORS, e origem não permitida segue
+retornando 403. O formulário público recebeu a mensagem de credenciais inválidas.
+
 O primeiro deploy foi criado pelo formulário Web Service. render.yaml mantém
 uma configuração equivalente para referência; não foi aplicado como Blueprint.
 Não crie um segundo serviço se a intenção for atualizar o que já está no ar:

@@ -1,6 +1,7 @@
 package com.berxy.projeto.TarefaPlano;
 
 import com.berxy.projeto.ModeloTarefa.ModeloTarefa;
+import com.berxy.projeto.ModeloTarefa.CategoriaTarefa;
 import com.berxy.projeto.PlanoIntercambio.PlanoIntercambio;
 import jakarta.persistence.*;
 
@@ -10,10 +11,10 @@ import java.time.LocalDate;
 @Entity
 @Table(
         name = "tarefa_plano",
-        uniqueConstraints = @UniqueConstraint(
+        uniqueConstraints = {@UniqueConstraint(
                 name = "uk_tarefa_plano_modelo",
                 columnNames = {"plano_id", "modelo_origem_id"}
-        )
+        ), @UniqueConstraint(name = "uk_tarefa_plano_sugestao", columnNames = {"plano_id", "chave_sugestao"})}
 )
 public class TarefaPlano {
 
@@ -25,9 +26,20 @@ public class TarefaPlano {
     @JoinColumn(name = "plano_id", nullable = false)
     private PlanoIntercambio plano;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "modelo_origem_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "modelo_origem_id")
     private ModeloTarefa modeloOrigem;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private CategoriaTarefa categoria;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private TemaChecklist tema;
+
+    @Column(length = 80)
+    private String chaveSugestao;
 
     @Column(nullable = false, length = 200)
     private String titulo;
@@ -71,11 +83,48 @@ public class TarefaPlano {
         this.modeloOrigem = modeloOrigem;
         this.titulo = modeloOrigem.getTitulo();
         this.descricao = modeloOrigem.getDescricao();
+        this.categoria = modeloOrigem.getCategoria();
         this.status = StatusTarefa.PENDENTE;
 
         // Mantém os dois lados da associação consistentes em memória.
         plano.adicionarTarefa(this);
     }
+
+    public TarefaPlano(PlanoIntercambio plano, String titulo, String descricao,
+                       CategoriaTarefa categoria, LocalDate prazo) {
+        if (plano == null) { throw new IllegalArgumentException("O plano é obrigatório."); }
+        this.plano = plano;
+        this.status = StatusTarefa.PENDENTE;
+        atualizarConteudo(titulo, descricao, categoria, prazo);
+        plano.adicionarTarefa(this);
+    }
+
+    public static TarefaPlano sugerida(PlanoIntercambio plano, TemaChecklist tema,
+                                       TemaChecklist.Sugestao sugestao) {
+        TarefaPlano tarefa = new TarefaPlano(plano, sugestao.titulo(), sugestao.descricao(), tema.getCategoria(), null);
+        tarefa.tema = tema;
+        tarefa.chaveSugestao = tema.name() + ":" + sugestao.chave();
+        return tarefa;
+    }
+
+    public void atualizarConteudo(String titulo, String descricao, CategoriaTarefa categoria, LocalDate prazo) {
+        if (titulo == null || titulo.isBlank() || titulo.strip().length() > 200) {
+            throw new IllegalArgumentException("Informe um título de até 200 caracteres.");
+        }
+        String texto = descricao == null ? "" : descricao.strip();
+        if (texto.length() > 400) { throw new IllegalArgumentException("A descrição deve ter até 400 caracteres."); }
+        if (categoria == null) { throw new IllegalArgumentException("A categoria é obrigatória."); }
+        this.titulo = titulo.strip();
+        this.descricao = texto;
+        this.categoria = categoria;
+        this.prazo = prazo;
+    }
+
+    public CategoriaTarefa getCategoria() {
+        return categoria != null ? categoria : modeloOrigem != null ? modeloOrigem.getCategoria() : CategoriaTarefa.OUTROS;
+    }
+    public TemaChecklist getTema() { return tema; }
+    public String getChaveSugestao() { return chaveSugestao; }
 
     public void iniciar() {
         if (status != StatusTarefa.PENDENTE) {

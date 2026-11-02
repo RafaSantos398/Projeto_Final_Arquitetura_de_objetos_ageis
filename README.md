@@ -519,7 +519,49 @@ A próxima etapa é a implantação pública. O frontend tem VITE_API_URL públi
 o backend em produção precisa de DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET
 e FRONTEND_ORIGINS configurados fora do repositório.
 
-## Docker — 02/11/2026
+## Checklists por tema e finanças — 02/11/2026
+
+O plano agora funciona sem curso cadastrado: seis temas oferecem 24 sugestões
+(documentação, finanças, moradia, viagem, idioma e estudos). O usuário também
+pode criar, editar e remover tarefas próprias. Adicionar novamente um tema
+preserva conteúdo editado, prazos e conclusões e não duplica tarefas. Uma
+sugestão removida pode voltar se o tema for adicionado novamente.
+
+Novos endpoints, sempre restritos ao dono do plano ou ADMIN:
+
+- GET /planos-intercambio/{id}/tarefas/temas: lista de temas e quantidades.
+- POST /planos-intercambio/{id}/tarefas/gerar-temas: {"temas":["DOCUMENTOS","FINANCAS"]}.
+- POST /planos-intercambio/{id}/tarefas: {"titulo":"Minha tarefa","descricao":"","categoria":"OUTROS","prazo":null}.
+- PUT /planos-intercambio/{id}/tarefas/{idTarefa}: atualiza esses mesmos campos sem reiniciar o status.
+- DELETE /planos-intercambio/{id}/tarefas/{idTarefa}: remove a tarefa daquele plano.
+- GET/PUT /planos-intercambio/{id}/financeiro: o PUT recebe metaTotal, valorGuardado e aporteMensal.
+
+A meta financeira atualiza orcamentoTotal. O retorno inclui o valor restante,
+meses completos até inicioPrevisto, aporte necessário arredondado para cima,
+meses necessários no ritmo atual, previsão no início e situação. Não há
+cotação automática, juros ou recomendações de investimento. Os valores são
+estimativas informadas pelo usuário, na moeda do plano.
+
+Os endpoints anteriores de geração por modelo/curso continuam disponíveis.
+Somente tarefas específicas do curso bloqueiam sua troca; tarefas próprias
+e por tema permitem selecionar um curso depois. As respostas de tarefa
+incluem categoria, tema e personalizada; modeloOrigemId pode ser null.
+
+Banco existente: aplicar projeto/database/migrations/20261102-checklists-financas.sql
+antes de publicar o novo backend. A migração é aditiva e foi reaplicada no
+PostgreSQL 18 local, preservando uma tarefa antiga concluída. O novo contexto
+Spring também validou o esquema migrado. Para execução manual, há o script
+projeto/scripts/atualizar-checklists-postgres.ps1, com senha solicitada pelo psql.
+
+Validação: 67 testes aprovados no H2 e 67 no PostgreSQL 18 local isolado;
+build Docker com 67 testes do backend e 8 do frontend aprovado. Navegador:
+geração sem curso, repetição sem duplicação, conclusão, tarefa própria,
+edição/remoção e finanças persistidas, incluindo aporte zero.
+
+Na publicação autorizada, a migração do PostgreSQL do Render foi aplicada em
+transação com comparação dos dados anteriores de planos e tarefas: preservados.
+
+## Execução com Docker
 
 Para a publicação do backend, consulte [DEPLOY-RENDER.md](DEPLOY-RENDER.md).
 O arquivo render.yaml prepara um serviço Docker Free e reutiliza o banco existente;
@@ -528,8 +570,10 @@ a configuração pode ser usada como referência para novas instalações.
 Backend publicado em 02/11/2026: https://berxy-api.onrender.com, Docker Free,
 Oregon, commit 256ba59 da branch feat/tarefasplano. Os 58 testes passaram no
 build remoto e sete verificações HTTP públicas de proteção, validação e CORS
-passaram sem cadastrar dados no PostgreSQL. O frontend público ainda será
-publicado separadamente; na Vercel, usar essa URL como VITE_API_URL, sem /api.
+passaram sem cadastrar dados no PostgreSQL. O frontend também foi publicado:
+https://berxy.vercel.app, com VITE_API_URL apontando para essa API, sem /api.
+FRONTEND_ORIGINS foi atualizado no Render; CORS e resposta de login inválido
+foram conferidos pelo domínio público.
 
 O Dockerfile está em projeto/Dockerfile, junto de pom.xml. O build executa
 os 58 testes no perfil dev e produz uma imagem Java 26 JRE, com usuário sem

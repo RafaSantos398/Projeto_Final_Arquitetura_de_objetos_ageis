@@ -39,6 +39,12 @@ public class PlanoIntercambio {
     @Column(precision = 14, scale = 2)
     private BigDecimal orcamentoTotal;
 
+    @Column(precision = 14, scale = 2)
+    private BigDecimal valorGuardado;
+
+    @Column(precision = 14, scale = 2)
+    private BigDecimal aporteMensal;
+
     @Column(length = 3)
     private String moeda;
 
@@ -150,6 +156,21 @@ public class PlanoIntercambio {
         this.status = status;
     }
 
+    public void atualizarFinancas(BigDecimal metaTotal, BigDecimal valorGuardado, BigDecimal aporteMensal) {
+        if (metaTotal == null || valorGuardado == null || aporteMensal == null) {
+            throw new IllegalArgumentException("Informe meta, valor guardado e aporte mensal, mesmo quando forem zero.");
+        }
+        BigDecimal meta = validarOrcamento(metaTotal);
+        BigDecimal guardado = validarOrcamento(valorGuardado);
+        BigDecimal mensal = validarOrcamento(aporteMensal);
+        this.orcamentoTotal = meta;
+        this.valorGuardado = guardado;
+        this.aporteMensal = mensal;
+    }
+
+    public BigDecimal getValorGuardado() { return valorGuardado == null ? BigDecimal.ZERO : valorGuardado; }
+    public BigDecimal getAporteMensal() { return aporteMensal == null ? BigDecimal.ZERO : aporteMensal; }
+
     public void selecionarCurso(Curso curso) {
         if (curso == null) {
             throw new IllegalArgumentException("O curso é obrigatório.");
@@ -159,7 +180,7 @@ public class PlanoIntercambio {
             return;
         }
 
-        if (!tarefas.isEmpty()) {
+        if (tarefas.stream().anyMatch(tarefa -> tarefa.getModeloOrigem() != null)) {
             throw new IllegalStateException(
                     "Não é possível trocar o curso após gerar tarefas."
             );
@@ -207,17 +228,11 @@ public class PlanoIntercambio {
             );
         }
 
-        if (curso == null) {
-            throw new IllegalStateException(
-                    "Selecione um curso antes de adicionar tarefas."
-            );
-        }
-
         if (tarefas.contains(tarefa)) {
             return;
         }
 
-        if (buscarTarefaDoModelo(tarefa.getModeloOrigem()) != null) {
+        if (tarefa.getModeloOrigem() != null && buscarTarefaDoModelo(tarefa.getModeloOrigem()) != null) {
             throw new IllegalStateException(
                     "Já existe uma tarefa deste modelo no plano."
             );
@@ -227,9 +242,10 @@ public class PlanoIntercambio {
     }
 
     private TarefaPlano buscarTarefaDoModelo(ModeloTarefa modelo) {
+        if (modelo == null) { return null; }
         for (TarefaPlano tarefa : tarefas) {
             ModeloTarefa origem = tarefa.getModeloOrigem();
-            if (origem == modelo || (modelo.getId() != null
+            if (origem == modelo || (origem != null && modelo.getId() != null
                     && modelo.getId().equals(origem.getId()))) {
                 return tarefa;
             }

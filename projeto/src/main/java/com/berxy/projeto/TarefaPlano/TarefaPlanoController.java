@@ -14,6 +14,36 @@ public class TarefaPlanoController {
     @Autowired
     private TarefaPlanoService tarefaPlanoService;
 
+    @GetMapping("/temas")
+    public List<TemaChecklist.Resposta> temas(@PathVariable("idPlano") Long idPlano) {
+        return tarefaPlanoService.temas(idPlano);
+    }
+
+    @PostMapping("/gerar-temas")
+    public List<TarefaPlanoResponse> gerarTemas(@PathVariable("idPlano") Long idPlano,
+            @RequestBody TarefaPlanoRequest.TemasRequest dados) {
+        return tarefaPlanoService.gerarTemas(idPlano, dados.temas()).stream().map(TarefaPlanoResponse::de).toList();
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public TarefaPlanoResponse criar(@PathVariable("idPlano") Long idPlano,
+            @RequestBody TarefaPlanoRequest.ConteudoRequest dados) {
+        return TarefaPlanoResponse.de(tarefaPlanoService.criar(idPlano, dados));
+    }
+
+    @PutMapping("/{idTarefa}")
+    public TarefaPlanoResponse atualizar(@PathVariable("idPlano") Long idPlano,
+            @PathVariable("idTarefa") Long idTarefa, @RequestBody TarefaPlanoRequest.ConteudoRequest dados) {
+        return TarefaPlanoResponse.de(tarefaPlanoService.atualizar(idPlano, idTarefa, dados));
+    }
+
+    @DeleteMapping("/{idTarefa}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remover(@PathVariable("idPlano") Long idPlano, @PathVariable("idTarefa") Long idTarefa) {
+        tarefaPlanoService.remover(idPlano, idTarefa);
+    }
+
     @GetMapping
     public List<TarefaPlanoResponse> list(@PathVariable("idPlano") Long idPlano) {
         List<TarefaPlanoResponse> respostas = new ArrayList<>();

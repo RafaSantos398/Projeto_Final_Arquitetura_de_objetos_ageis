@@ -99,6 +99,105 @@ class FluxosPlanejamentoTest {
     }
 
     @Test
+    void temasSemCursoPreservamTarefasEditadasEConclusoesSemDuplicar() throws Exception {
+        Cenario c = cenario(false);
+        mvc.perform(get(rota(c) + "/temas")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(6));
+        String body = "{\"temas\":[\"DOCUMENTOS\",\"FINANCAS\",\"DOCUMENTOS\"]}";
+        mvc.perform(post(rota(c) + "/gerar-temas").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(8))
+                .andExpect(jsonPath("$[0].modeloOrigemId").isEmpty());
+        Long id = tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).getFirst().getId();
+        mvc.perform(patch(rota(c) + "/{id}/concluir", id)).andExpect(status().isOk());
+        mvc.perform(put(rota(c) + "/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titulo\":\"Meu passaporte\",\"descricao\":\"Observação pessoal\",\"categoria\":\"DOCUMENTACAO\",\"prazo\":\"2027-01-15\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CONCLUIDA"));
+        mvc.perform(post(rota(c) + "/gerar-temas").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(8));
+        mvc.perform(get(rota(c) + "/{id}", id)).andExpect(jsonPath("$.titulo").value("Meu passaporte"))
+                .andExpect(jsonPath("$.prazo").value("2027-01-15"))
+                .andExpect(jsonPath("$.status").value("CONCLUIDA"));
+        assertEquals(0, modelos.count());
+    }
+
+    @Test
+    void tarefasPropriasPodemSerCriadasEditadasRemovidasSemCurso() throws Exception {
+        Cenario c = cenario(false);
+        String result = mvc.perform(post(rota(c)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titulo\":\"Pesquisar destinos\",\"categoria\":\"OUTROS\"}"))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.personalizada").value(true))
+                .andReturn().getResponse().getContentAsString();
+        Long id = tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).getFirst().getId();
+        mvc.perform(put(rota(c) + "/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titulo\":\"Comparar três destinos\",\"descricao\":\"Comparar custos\",\"categoria\":\"FINANCEIRO\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.titulo").value("Comparar três destinos"));
+        mvc.perform(delete(rota(c) + "/{id}", id)).andExpect(status().isNoContent());
+        mvc.perform(get(rota(c) + "/{id}", id)).andExpect(status().isNotFound());
+        assertEquals(0, modelos.count());
+    }
+
+    @Test
+    void tarefaPorTemaNaoBloqueiaEscolhaPosteriorDeCurso() throws Exception {
+        Cenario c = cenario(false);
+        mvc.perform(post(rota(c) + "/gerar-temas").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"temas\":[\"DOCUMENTOS\"]}")).andExpect(status().isOk());
+        mvc.perform(patch("/planos-intercambio/{id}/curso", c.planoId()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"cursoId\":" + c.cursoId() + "}")).andExpect(status().isOk());
+        ModeloTarefa modelo = modelo("Documento específico");
+        cursoService.associarModelo(c.cursoId(), modelo.getId());
+        mvc.perform(post(rota(c) + "/gerar-checklist")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(5));
+    }
+
+    @Test
+    void rejeitaTemasETarefasInvalidosSemGravarParcialmente() throws Exception {
+        Cenario c = cenario(false);
+        for (String body : java.util.List.of("{}", "{\"temas\":[]}", "{\"temas\":[null]}", "{\"temas\":[\"DOCUMENTOS\",\"NAO_EXISTE\"]}")) {
+            mvc.perform(post(rota(c) + "/gerar-temas").contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        mvc.perform(post(rota(c)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titulo\":\" \",\"categoria\":\"OUTROS\"}"))
+                .andExpect(status().isBadRequest());
+        assertEquals(0, tarefas.count());
+    }
+
+    @Test
+    void financasPersistemEMetaAtualizaOrcamentoSemDependerDeCurso() throws Exception {
+        Cenario c = cenario(false);
+        String path = "/planos-intercambio/" + c.planoId() + "/financeiro";
+        mvc.perform(put(path).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"metaTotal\":12000,\"valorGuardado\":2000,\"aporteMensal\":800}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.valorRestante").value(10000))
+                .andExpect(jsonPath("$.mesesParaMeta").value(13));
+        mvc.perform(get(path)).andExpect(jsonPath("$.valorGuardado").value(2000))
+                .andExpect(jsonPath("$.aporteMensal").value(800));
+        mvc.perform(get("/planos-intercambio/{id}", c.planoId()))
+                .andExpect(jsonPath("$.orcamentoTotal").value(12000));
+        for (String body : java.util.List.of("{}", "{\"metaTotal\":1,\"valorGuardado\":-1,\"aporteMensal\":1}",
+                "{\"metaTotal\":1.001,\"valorGuardado\":0,\"aporteMensal\":1}")) {
+            mvc.perform(put(path).contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        mvc.perform(get(path)).andExpect(jsonPath("$.metaTotal").value(12000));
+    }
+
+    @Test
+    void novosRecursosContinuamIsoladosEntreUsuarios() throws Exception {
+        Cenario c = cenario(false);
+        User outro = usuarios.save(new User("Outro", UUID.randomUUID() + "@test.com", "hash-teste"));
+        String token = context.getBean(com.berxy.projeto.security.JwtService.class).generateToken(outro.getEmail());
+        mvc.perform(post(rota(c)).header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titulo\":\"Invadir plano\",\"categoria\":\"OUTROS\"}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(rota(c) + "/gerar-temas").header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"temas\":[\"FINANCAS\"]}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/planos-intercambio/{id}/financeiro", c.planoId()).header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void checklistUsaModelosAtivosDoCursoEPreservaProgresso() throws Exception {
         Cenario cenario = cenario(true);
         ModeloTarefa passaporte = modelo("Passaporte");
