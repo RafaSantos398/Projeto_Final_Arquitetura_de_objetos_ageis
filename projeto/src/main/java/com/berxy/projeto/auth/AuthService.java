@@ -35,6 +35,7 @@ public class AuthService {
 
     // Busca o usuário e compara a senha com PasswordEncoder.matches, como na Aula 14.
     public AuthResponse login(LoginRequest dados) {
+        usuarios.validarLimiteSenha(dados.password(), "password");
         try {
             var detalhes = usuarios.loadUserByUsername(dados.email());
             if (!encoder.matches(dados.password(), detalhes.getPassword())) {

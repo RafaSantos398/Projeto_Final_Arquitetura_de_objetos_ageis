@@ -3,7 +3,7 @@ package com.berxy.projeto.auth;
 import com.berxy.projeto.auth.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import com.berxy.projeto.exception.ErroResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -34,7 +34,8 @@ public class AuthController {
     public void logout() { }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ProblemDetail credenciaisInvalidas() {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "E-mail ou senha inválidos.");
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErroResponse credenciaisInvalidas() {
+        return new ErroResponse(401, "E-mail ou senha inválidos.");
     }
 }

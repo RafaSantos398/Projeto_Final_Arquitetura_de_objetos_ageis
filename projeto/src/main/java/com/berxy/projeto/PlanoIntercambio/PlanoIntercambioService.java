@@ -87,11 +87,6 @@ public class PlanoIntercambioService {
         return planoIntercambioRepository.save(plano);
     }
 
-    public PlanoIntercambio bloquearPlano(Long id) {
-        return planoIntercambioRepository.bloquearPorId(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plano não encontrado."));
-    }
-
     @Transactional(readOnly = true)
     public PlanejamentoFinanceiro consultarFinancas(Long id) {
         return PlanejamentoFinanceiro.de(GetByid(id), LocalDate.now());

@@ -1,0 +1,23 @@
+sequenceDiagram
+    actor Pessoa
+    participant UI as React
+    participant F as Filtro JWT
+    participant A as AcessoService
+    participant C as TarefaPlanoController
+    participant S as TarefaPlanoService
+    participant T as TarefaPlano
+    participant DB as PostgreSQL
+    Pessoa->>UI: Abrir caderno e escrever
+    UI->>F: PUT anotacoes com Bearer e texto
+    F->>F: Conferir assinatura e expiracao
+    F->>A: Verificar papel e dono do plano
+    A-->>F: Autorizar ou rejeitar
+    F->>C: Encaminhar requisicao autorizada
+    C->>S: atualizarAnotacoes(planoId, tarefaId, texto)
+    S->>DB: Consultar tarefa dentro do plano
+    S->>T: atualizarAnotacoes(texto)
+    T->>T: Validar limite e atualizar horario
+    S->>DB: Salvar na transacao
+    S-->>C: Tarefa persistida
+    C-->>UI: tarefaId, texto, atualizadoEm
+    UI-->>Pessoa: Confirmacao de salvamento

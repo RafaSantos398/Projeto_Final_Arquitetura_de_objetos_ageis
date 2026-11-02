@@ -1,103 +1,45 @@
 # Backend Berxy no Render
 
-## Estado
+Serviço existente: **berxy-api**, URL **https://berxy-api.onrender.com**.
+Frontend: **https://berxy.vercel.app**. PostgreSQL existente, com SSL.
 
-Backend publicado em 02/11/2026: **https://berxy-api.onrender.com**.
-O serviço berxy-api está Live, no plano Free, em Oregon, usando Docker e o
-PostgreSQL existente. Código do quadro compacto: 103e82b, branch feat/tarefasplano.
-A mesma versão do código também foi enviada para main.
-
-O quadro compacto usa PATCH /planos-intercambio/{id}/tarefas/{idTarefa}/status.
-Esta atualização não exige migração e passou nos 69 testes do build Docker.
-
-A versão 5f69009 inclui checklists por tema, tarefas próprias e finanças.
-A migração 20261102-checklists-financas.sql foi aplicada no Render em transação,
-comparando os dados anteriores de planos e tarefas: preservados. Os 67 testes
-passaram no build remoto e o novo contexto validou o esquema de produção.
-O frontend correspondente foi publicado na Vercel a partir de b02356d.
-
-Frontend publicado: **https://berxy.vercel.app**. Essa origem foi adicionada
-a FRONTEND_ORIGINS no painel do Render e aplicada por Save and deploy, com a
-imagem existente do commit 256ba59. Preflight da Vercel retorna 200, API sem
-token e login inexistente retornam 401 com CORS, e origem não permitida segue
-retornando 403. O formulário público recebeu a mensagem de credenciais inválidas.
-
-O primeiro deploy foi criado pelo formulário Web Service. render.yaml mantém
-uma configuração equivalente para referência; não foi aplicado como Blueprint.
-Não crie um segundo serviço se a intenção for atualizar o que já está no ar:
-use Manual Deploy no serviço existente. Auto-deploy está desativado.
-
-Na publicação inicial, 58 testes passaram no build do Render. Sete checks HTTP na URL HTTPS passaram:
-rotas sem token 401; token inválido 401; login inexistente 401; cadastro vazio
-400; preflight permitido 200; origem não autorizada 403. Não foram criados dados
-de teste no PostgreSQL. Cadastro/login bem-sucedidos e fluxos autenticados ainda
-devem ser conferidos com a conta escolhida pelo usuário.
-
-## Publicar com Blueprint
-
-1. Enviar a versão validada para a branch feat/tarefasplano do repositório
-   RafaSantos398/Projeto_Final_Arquitetura_de_objetos_ageis.
-2. No Render, selecionar New → Blueprint e conectar esse repositório/branch.
-3. Conferir o serviço berxy-api, Docker, Oregon e plano Free.
-4. Preencher DB_URL, DB_USERNAME e DB_PASSWORD somente no painel do Render.
-5. Conferir a configuração antes de iniciar a criação do serviço.
-
-Formato de DB_URL, com o hostname do banco existente:
-
-```text
-jdbc:postgresql://HOSTNAME:5432/projeto_intercambio?sslmode=require
-```
-
-Não usar a URI postgresql:// com usuário/senha dentro como DB_URL: o backend
-espera JDBC e credenciais separadas. Para a conexão interna, conferir primeiro
-no Render se o banco e o serviço estão na mesma região e workspace.
-
-JWT_SECRET será gerada pelo Render, sem ser incluída no código. O perfil prod
-valida as tabelas existentes e não as recria. A JVM limita o heap a metade da
-memória disponível no container; conferir o consumo e os logs no primeiro deploy.
-
-Verificação local: a imagem iniciou saudável com limite de 512 MiB e heap a
-50%, usando aproximadamente 219 MiB em repouso no perfil dev/H2. Isso confere
-a inicialização nesse limite; o consumo real no Render/PostgreSQL deve ser
-acompanhado durante o uso e não foi medido por esse teste.
-
-Não configurar SERVER_PORT: a aplicação usa PORT fornecida pelo Render.
-O Dockerfile executa os testes usando H2 durante o build.
-
-## Alternativa: formulário Web Service
-
-Se criar manualmente em New → Web Service:
+## Configuração atual
 
 | Campo | Valor |
-| --- | --- |
-| Branch | feat/tarefasplano |
-| Language | Docker |
-| Region | Oregon |
-| Instance Type | Free |
+|---|---|
+| Repositório | RafaSantos398/Projeto_Final_Arquitetura_de_objetos_ageis |
+| Branch de entrega | main |
+| Runtime | Docker |
 | Root Directory | projeto |
-| Dockerfile Path | ./Dockerfile (relativo à Root Directory) |
-| Docker Build Context | . (relativo à Root Directory) |
-| Docker Command | Deixar vazio |
-| Health Check Path | Deixar vazio: usar verificação TCP padrão |
+| Dockerfile Path | ./Dockerfile, relativo à Root Directory |
+| Docker Build Context | . |
+| Região / plano | Oregon / Free |
+| Auto-deploy | Desativado; atualização manual no serviço existente |
 
-Adicionar as mesmas variáveis do render.yaml. JWT_SECRET deve ser aleatória,
-com pelo menos 32 bytes. Não usar uma senha de usuário como chave JWT.
-Não configurar /auth/me como healthcheck HTTP: sem token ela retorna 401.
+O render.yaml representa configuração equivalente para referência. O serviço foi
+criado pelo formulário; editar o YAML não altera sozinho a configuração no painel.
+Não criar outro serviço apenas para atualizar o código.
 
-## Conferir depois do deploy
+## Variáveis do serviço
 
-- Serviço Live e logs confirmando perfil prod, conexão PostgreSQL e inicialização.
-- GET https://URL-DO-SERVICO/auth/me sem token deve retornar 401.
-- Não há página de frontend na raiz da API; ela será publicada separadamente.
-- Cadastro/login e operações autenticadas devem ser validados antes da entrega,
-  com uma conta de teste identificada e sem alterar dados de outras pessoas.
-- Frontend: definir VITE_API_URL=https://berxy-api.onrender.com, sem /api, e gerar novo build.
-- Quando houver URL da Vercel, adicioná-la a FRONTEND_ORIGINS no backend.
+- SPRING_PROFILES_ACTIVE=prod
+- DB_URL=jdbc:postgresql://HOST:5432/projeto_intercambio?sslmode=require
+- DB_USERNAME e DB_PASSWORD: credenciais atuais somente no ambiente do Render.
+- JWT_SECRET: chave privada de pelo menos 32 bytes, sem valor padrão de produção.
+- FRONTEND_ORIGINS: https://berxy.vercel.app e origens locais explicitamente permitidas.
+- JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0
 
-O plano Free pode suspender o serviço por inatividade e o primeiro acesso pode
-demorar. A criação de um serviço pago depende de uma escolha explícita do usuário.
+Não configurar SERVER_PORT fixo no Render: a aplicação usa PORT da plataforma.
+O Dockerfile executa os testes no perfil dev/H2 e inicia a imagem final no perfil prod.
+Produção usa ddl-auto=validate; não recria o banco. Migrações de checklists/finanças e
+anotações já foram aplicadas. A revisão de escopo não exige outra migração.
 
-Referências: [Docker](https://render.com/docs/docker),
-[Blueprint](https://render.com/docs/blueprint-spec),
-[healthchecks](https://render.com/docs/health-checks),
-[plano Free](https://render.com/docs/free).
+## Atualizar
+
+Enviar main; conferir a branch no painel; Manual Deploy → Deploy latest commit.
+Aguardar testes/build e Live. Conferir a API sem Bearer em 401, login inválido em 401,
+cadastro inválido em 400 e preflight da Vercel em 200 com a origem correta.
+Depois conferir o frontend publicado pela integração Git da Vercel.
+
+[Validações e operação completas](docs/VALIDACAO-E-DEPLOY.md) ·
+[Revisão de escopo](docs/REVISAO-ESCOPO.md) · [API](docs/API.md).

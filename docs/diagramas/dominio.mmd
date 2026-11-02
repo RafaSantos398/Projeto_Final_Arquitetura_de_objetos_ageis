@@ -1,0 +1,77 @@
+classDiagram
+    direction TB
+    class User {
+        Long id
+        String email
+        String passwordHash
+        Role role
+        boolean active
+    }
+    class PerfilINtercambista {
+        Long id
+        LocalDate nascimento
+        String paisResidencia
+        atualizar(dados)
+    }
+    class ProficienciaIdioma {
+        <<value object>>
+        String idioma
+        NivelProficiencia nivel
+    }
+    class Instituicao {
+        Long id
+        String nome
+        String siteOficial
+    }
+    class AreaEstudo {
+        Long id
+        String nome
+        String descricao
+    }
+    class Curso {
+        Long id
+        TipoIntercambio tipoIntercambio
+        String idioma
+        boolean ativo
+        adicionarModeloTarefa(modelo)
+    }
+    class ModeloTarefa {
+        Long id
+        String titulo
+        CategoriaTarefa categoria
+        boolean ativo
+    }
+    class PlanoIntercambio {
+        Long id
+        StatusPlano status
+        BigDecimal orcamentoTotal
+        BigDecimal valorGuardado
+        BigDecimal aporteMensal
+        selecionarCurso(curso)
+    }
+    class TarefaPlano {
+        Long id
+        String titulo
+        StatusTarefa status
+        LocalDate prazo
+        String anotacoes
+        Instant concluidaEm
+        moverPara(status)
+    }
+    class PreparacaoIdioma {
+        Long id
+        String idioma
+        NivelProficiencia nivelAlvo
+        StatusPreparacao status
+        Integer minutosSemanaisPlanejados
+    }
+    User "1" -- "0..1" PerfilINtercambista : perfil
+    PerfilINtercambista "1" *-- "0..*" ProficienciaIdioma : valores do perfil
+    User "1" -- "0..*" PlanoIntercambio : dono
+    Instituicao "1" -- "0..*" Curso : oferece
+    Curso "0..*" -- "0..*" ModeloTarefa : modelos associados
+    Curso "0..1" -- "0..*" PlanoIntercambio : escolhido
+    PlanoIntercambio "0..*" -- "0..*" AreaEstudo : interesses no dominio
+    PlanoIntercambio "1" -- "0..*" TarefaPlano : checklist
+    ModeloTarefa "0..1" -- "0..*" TarefaPlano : origem opcional
+    PlanoIntercambio "1" -- "0..*" PreparacaoIdioma : metas

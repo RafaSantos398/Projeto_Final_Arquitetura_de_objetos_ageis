@@ -45,7 +45,7 @@ public class TarefaPlanoService {
         if (temas == null || temas.isEmpty() || temas.contains(null)) {
             throw new IllegalArgumentException("Selecione pelo menos um tema válido.");
         }
-        PlanoIntercambio plano = planoIntercambioService.bloquearPlano(planoId);
+        PlanoIntercambio plano = planoIntercambioService.GetByid(planoId);
         for (TemaChecklist tema : temas.stream().distinct().toList()) {
             for (TemaChecklist.Sugestao sugestao : tema.getSugestoes()) {
                 if (!tarefaPlanoRepository.existsByPlanoIdAndChaveSugestao(planoId, tema.name() + ":" + sugestao.chave())) {

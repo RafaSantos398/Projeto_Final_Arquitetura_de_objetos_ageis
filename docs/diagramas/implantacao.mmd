@@ -1,0 +1,11 @@
+flowchart TB
+    subgraph Publico
+        Navegador[Navegador do usuario] -->|HTTPS| Vercel[Vercel serve React]
+        Navegador -->|fetch HTTPS com JWT| Render[Render executa Docker Spring]
+        Render -->|JDBC com SSL| PG[(PostgreSQL existente)]
+    end
+    subgraph Desenvolvimento
+        Local[Navegador local] -->|localhost 3001| Nginx[Nginx serve React]
+        Nginx -->|proxy /api| API[Spring dev no Compose]
+        API --> H2[(H2 descartavel)]
+    end

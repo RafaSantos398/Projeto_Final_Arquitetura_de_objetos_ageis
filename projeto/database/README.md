@@ -5,7 +5,7 @@ usando o dialeto PostgreSQL e a estratégia de nomes da aplicação. Ele define
 13 tabelas, 13 chaves estrangeiras, índices únicos e restrições de enums.
 O SQL não contém comandos de exclusão de tabelas ou dados.
 
-## Validação realizada em 02/11/2026
+## Histórico de validação em 02/11/2026
 
 O inicializador concluiu a conexão com o PostgreSQL do Render: 13 tabelas
 presentes e `ProjetoApplicationTests` aprovado no perfil `prod`, com
@@ -95,3 +95,18 @@ posterior da aplicação: o backend precisa de sua própria variável persistent
 
 O script inicial serve para um banco novo. Futuras alterações nas entidades
 podem exigir alterações correspondentes no esquema antes de executar `validate`.
+
+
+## Estado atual e migrações
+
+O esquema completo inclui checklists por tema, finanças e cadernos das tarefas.
+As migrações abaixo já foram aplicadas ao banco publicado, com preservação dos dados:
+
+1. migrations/20261102-checklists-financas.sql
+2. migrations/20261102-anotacoes-tarefas.sql
+
+Para um banco existente anterior, aplicar em ordem antes de publicar a versão que usa
+os campos. Para banco vazio, o schema-postgresql.sql atual já contém esses campos.
+A revisão de escopo de 02/11/2026 altera somente código e documentação, sem migração.
+72 testes atuais passaram em H2; os resultados PostgreSQL acima são históricos,
+não uma afirmação de que a suíte atual inteira rodou nesse banco.

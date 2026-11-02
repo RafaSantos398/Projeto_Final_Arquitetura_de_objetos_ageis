@@ -21,6 +21,7 @@ public class UserService implements org.springframework.security.core.userdetail
 
     @Transactional
     public User create(String nome, String email, String rawPassword) {
+        validarLimiteSenha(rawPassword, "password");
         String normalizedEmail = normalizeEmail(email);
 
         if (userRepository.existsByEmail(normalizedEmail)) {
@@ -85,6 +86,8 @@ public class UserService implements org.springframework.security.core.userdetail
 
     @Transactional
     public void changePassword(Long id, String currentPassword, String newPassword) {
+        validarLimiteSenha(currentPassword, "currentPassword");
+        validarLimiteSenha(newPassword, "newPassword");
         User user = findById(id);
 
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
@@ -111,5 +114,14 @@ public class UserService implements org.springframework.security.core.userdetail
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    // @Size conta caracteres; o BCrypt aceita no máximo 72 bytes UTF-8.
+    // Validação com if e exceção, como nas Aulas 03 e 08.
+    public void validarLimiteSenha(String senha, String campo) {
+        if (senha == null || senha.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new com.berxy.projeto.exception.CampoInvalidoException(
+                    campo, "A senha deve ter no máximo 72 bytes em UTF-8.");
+        }
     }
 }

@@ -5,7 +5,7 @@ services:
     runtime: docker
     plan: free
     region: oregon
-    branch: feat/tarefasplano
+    branch: main
     dockerfilePath: ./projeto/Dockerfile
     dockerContext: ./projeto
     autoDeployTrigger: "off"

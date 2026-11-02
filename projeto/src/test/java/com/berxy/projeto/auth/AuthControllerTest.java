@@ -123,6 +123,18 @@ class AuthControllerTest {
     }
 
     @Test
+    void cadastroELoginValidamLimiteEmBytesSemAnotacaoPersonalizada() throws Exception {
+        String senha = "á".repeat(37); // 37 caracteres, 74 bytes.
+        mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nome\":\"Limite\",\"email\":\"limite@example.com\",\"password\":\"" + senha + "\"}"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors.password").exists());
+        mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content(loginJson("limite@example.com", senha)))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors.password").exists());
+        assertTrue(usuarios.findByEmail("limite@example.com").isEmpty());
+    }
+
+    @Test
     void rotasProtegidasExigemBearerELogoutDependeDoDescarteNoCliente() throws Exception {
         for (String rota : new String[]{"/users", "/planos-intercambio", "/cursos", "/auth/me"}) {
             mvc.perform(get(rota)).andExpect(status().isUnauthorized());

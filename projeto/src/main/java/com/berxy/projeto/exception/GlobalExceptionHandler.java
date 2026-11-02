@@ -4,60 +4,77 @@ import com.berxy.projeto.user.EmailAlreadyInUseException;
 import com.berxy.projeto.user.InvalidPasswordException;
 import com.berxy.projeto.user.UserNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-// Estende ResponseEntityExceptionHandler para que erros do Spring MVC
-// (JSON malformado, tipo de parâmetro inválido, 404 de rota etc.) também retornem ProblemDetail
-@RestControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
-
+// Aula 08: exceções + DTO + @ExceptionHandler, sem uma hierarquia de handlers.
+@ControllerAdvice
+@ResponseBody
+public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
-    public ProblemDetail handleNotFound(UserNotFoundException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErroResponse naoEncontrado(UserNotFoundException erro) {
+        return new ErroResponse(404, erro.getMessage());
     }
 
     @ExceptionHandler(EmailAlreadyInUseException.class)
-    public ProblemDetail handleEmailInUse(EmailAlreadyInUseException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErroResponse emailEmUso(EmailAlreadyInUseException erro) {
+        return new ErroResponse(409, erro.getMessage());
     }
 
     @ExceptionHandler(InvalidPasswordException.class)
-    public ProblemDetail handleInvalidPassword(InvalidPasswordException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErroResponse senhaIncorreta(InvalidPasswordException erro) {
+        return new ErroResponse(400, erro.getMessage());
     }
 
-    // Violação de constraint no banco (ex.: dois cadastros simultâneos com o mesmo e-mail)
+    @ExceptionHandler(CampoInvalidoException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErroResponse campoInvalido(CampoInvalidoException erro) {
+        return new ErroResponse(400, "Dados inválidos", Map.of(erro.getCampo(), erro.getMessage()));
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Os dados conflitam com um registro existente");
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErroResponse conflitoNoBanco() {
+        return new ErroResponse(409, "Os dados conflitam com um registro existente");
     }
 
-    @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-                                                                  HttpHeaders headers,
-                                                                  HttpStatusCode status,
-                                                                  WebRequest request) {
-        Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(
-                        error -> error.getField(),
-                        error -> error.getDefaultMessage(),
-                        (first, second) -> first
-                ));
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErroResponse dadosInvalidos(MethodArgumentNotValidException erro) {
+        Map<String, String> campos = new LinkedHashMap<>();
+        for (var campo : erro.getBindingResult().getFieldErrors()) {
+            campos.putIfAbsent(campo.getField(), campo.getDefaultMessage());
+        }
+        return new ErroResponse(400, "Dados inválidos", campos);
+    }
 
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Dados inválidos");
-        problem.setProperty("errors", errors);
-        return handleExceptionInternal(ex, problem, headers, HttpStatus.BAD_REQUEST, request);
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErroResponse formatoInvalido() {
+        return new ErroResponse(400, "Confira o JSON e os tipos dos dados enviados.");
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErroResponse rotaInexistente() {
+        return new ErroResponse(404, "Rota não encontrada.");
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErroResponse> statusDoServico(ResponseStatusException erro) {
+        return ResponseEntity.status(erro.getStatusCode()).body(
+                new ErroResponse(erro.getStatusCode().value(), erro.getReason()));
     }
 }

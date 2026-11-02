@@ -1,5 +1,6 @@
 package com.berxy.projeto.perfilIntercambista;
 import jakarta.validation.Valid;
+import com.berxy.projeto.exception.ErroResponse;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -21,7 +22,8 @@ public class PerfilController {
         return service.atualizar(usuarioId, dados);
     }
     @ExceptionHandler(IllegalArgumentException.class)
-    public ProblemDetail dadosInvalidos(IllegalArgumentException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErroResponse dadosInvalidos(IllegalArgumentException ex) {
+        return new ErroResponse(400, ex.getMessage());
     }
 }

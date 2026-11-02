@@ -1,0 +1,9 @@
+flowchart LR
+    React[React na Vercel] -->|HTTPS JSON e Bearer| Filter[Filtro JWT e AcessoService]
+    Filter --> Controller[Controller e DTOs]
+    Controller --> Service[Service e transacao]
+    Service --> Domain[Entidade e regras]
+    Service --> Repo[JpaRepository]
+    Repo --> DB[(PostgreSQL no Render)]
+    Service --> Response[DTO de resposta]
+    Response --> React
