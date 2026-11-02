@@ -2,9 +2,21 @@
 
 ## Estado
 
-Configuração preparada em render.yaml. Criar esse arquivo localmente não
-publica o serviço: ele e o código atual precisam estar no GitHub antes do deploy.
-O serviço usará o PostgreSQL existente; não há criação de outro banco no Blueprint.
+Backend publicado em 02/11/2026: **https://berxy-api.onrender.com**.
+O serviço berxy-api está Live, no plano Free, em Oregon, usando Docker e o
+PostgreSQL existente. Commit publicado: 256ba59, branch feat/tarefasplano.
+A mesma versão do código também foi enviada para main.
+
+O primeiro deploy foi criado pelo formulário Web Service. render.yaml mantém
+uma configuração equivalente para referência; não foi aplicado como Blueprint.
+Não crie um segundo serviço se a intenção for atualizar o que já está no ar:
+use Manual Deploy no serviço existente. Auto-deploy está desativado.
+
+Os 58 testes passaram no build do Render. Sete checks HTTP na URL HTTPS passaram:
+rotas sem token 401; token inválido 401; login inexistente 401; cadastro vazio
+400; preflight permitido 200; origem não autorizada 403. Não foram criados dados
+de teste no PostgreSQL. Cadastro/login bem-sucedidos e fluxos autenticados ainda
+devem ser conferidos com a conta escolhida pelo usuário.
 
 ## Publicar com Blueprint
 
@@ -64,7 +76,7 @@ Não configurar /auth/me como healthcheck HTTP: sem token ela retorna 401.
 - Não há página de frontend na raiz da API; ela será publicada separadamente.
 - Cadastro/login e operações autenticadas devem ser validados antes da entrega,
   com uma conta de teste identificada e sem alterar dados de outras pessoas.
-- Frontend: definir VITE_API_URL=https://URL-DO-SERVICO, sem /api, e gerar novo build.
+- Frontend: definir VITE_API_URL=https://berxy-api.onrender.com, sem /api, e gerar novo build.
 - Quando houver URL da Vercel, adicioná-la a FRONTEND_ORIGINS no backend.
 
 O plano Free pode suspender o serviço por inatividade e o primeiro acesso pode

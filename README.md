@@ -523,7 +523,13 @@ e FRONTEND_ORIGINS configurados fora do repositório.
 
 Para a publicação do backend, consulte [DEPLOY-RENDER.md](DEPLOY-RENDER.md).
 O arquivo render.yaml prepara um serviço Docker Free e reutiliza o banco existente;
-a configuração local ainda precisa ser enviada ao GitHub e aplicada no Render.
+a configuração pode ser usada como referência para novas instalações.
+
+Backend publicado em 02/11/2026: https://berxy-api.onrender.com, Docker Free,
+Oregon, commit 256ba59 da branch feat/tarefasplano. Os 58 testes passaram no
+build remoto e sete verificações HTTP públicas de proteção, validação e CORS
+passaram sem cadastrar dados no PostgreSQL. O frontend público ainda será
+publicado separadamente; na Vercel, usar essa URL como VITE_API_URL, sem /api.
 
 O Dockerfile está em projeto/Dockerfile, junto de pom.xml. O build executa
 os 58 testes no perfil dev e produz uma imagem Java 26 JRE, com usuário sem
