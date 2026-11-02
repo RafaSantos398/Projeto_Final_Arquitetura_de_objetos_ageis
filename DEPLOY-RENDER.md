@@ -4,8 +4,14 @@
 
 Backend publicado em 02/11/2026: **https://berxy-api.onrender.com**.
 O serviço berxy-api está Live, no plano Free, em Oregon, usando Docker e o
-PostgreSQL existente. Commit publicado: 256ba59, branch feat/tarefasplano.
+PostgreSQL existente. Código atual publicado: 5f69009, branch feat/tarefasplano.
 A mesma versão do código também foi enviada para main.
+
+A versão 5f69009 inclui checklists por tema, tarefas próprias e finanças.
+A migração 20261102-checklists-financas.sql foi aplicada no Render em transação,
+comparando os dados anteriores de planos e tarefas: preservados. Os 67 testes
+passaram no build remoto e o novo contexto validou o esquema de produção.
+O frontend correspondente foi publicado na Vercel a partir de b02356d.
 
 Frontend publicado: **https://berxy.vercel.app**. Essa origem foi adicionada
 a FRONTEND_ORIGINS no painel do Render e aplicada por Save and deploy, com a
@@ -18,7 +24,7 @@ uma configuração equivalente para referência; não foi aplicado como Blueprin
 Não crie um segundo serviço se a intenção for atualizar o que já está no ar:
 use Manual Deploy no serviço existente. Auto-deploy está desativado.
 
-Os 58 testes passaram no build do Render. Sete checks HTTP na URL HTTPS passaram:
+Na publicação inicial, 58 testes passaram no build do Render. Sete checks HTTP na URL HTTPS passaram:
 rotas sem token 401; token inválido 401; login inexistente 401; cadastro vazio
 400; preflight permitido 200; origem não autorizada 403. Não foram criados dados
 de teste no PostgreSQL. Cadastro/login bem-sucedidos e fluxos autenticados ainda
