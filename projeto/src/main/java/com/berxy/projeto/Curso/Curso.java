@@ -156,6 +156,9 @@ public class Curso {
             throw new IllegalArgumentException("O idioma é obrigatório.");
         }
 
+        if (!idioma.strip().matches("[a-zA-Z]{2}(-[a-zA-Z]{2})?")) {
+            throw new IllegalArgumentException("O idioma deve ser um código como en ou pt-BR.");
+        }
         String[] partes = idioma.strip().split("-");
         String codigo = partes[0].toLowerCase(Locale.ROOT);
         if (partes.length == 2) {

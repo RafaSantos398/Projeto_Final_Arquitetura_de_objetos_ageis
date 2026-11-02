@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PlanoIntercambioRepository extends JpaRepository<PlanoIntercambio, Long> {
+    java.util.List<PlanoIntercambio> findByUserIdOrderByIdAsc(Long usuarioId);
 }

@@ -49,11 +49,13 @@ public class PreparacaoIdiomaService {
 
     public PreparacaoIdioma atualizarPreparacao(Long planoId, Long id, PreparacaoIdiomaRequest dados) {
         PreparacaoIdioma preparacao = buscar(planoId, id);
+        if (!preparacao.isConcluida()) {
+            verificarIdiomaDuplicado(planoId, dados.idioma(), id);
+        }
         preparacao.atualizarConteudo(
                 dados.idioma(), dados.nivelAlvo(),
                 dados.dataMeta(), dados.minutosSemanaisPlanejados()
         );
-        verificarIdiomaDuplicado(planoId, preparacao.getIdioma(), id);
         return repository.save(preparacao);
     }
 
@@ -78,7 +80,7 @@ public class PreparacaoIdiomaService {
     private void verificarIdiomaDuplicado(Long planoId, String idioma, Long idIgnorado) {
         for (PreparacaoIdioma outra : repository.findByPlanoIntercambioId(planoId)) {
             if (!outra.getId().equals(idIgnorado) && !outra.isConcluida()
-                    && outra.getIdioma().equals(idioma)) {
+                    && outra.getIdioma().equalsIgnoreCase(idioma == null ? null : idioma.strip())) {
                 throw new IllegalStateException(
                         "Já existe uma preparação em aberto para este idioma no plano."
                 );

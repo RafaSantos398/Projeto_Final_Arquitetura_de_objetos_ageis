@@ -10,6 +10,18 @@ import java.util.List;
 @RequestMapping("/area-estudo")
 public class AreaEstudoController {
 
+    @ExceptionHandler(java.util.NoSuchElementException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String naoEncontrada(java.util.NoSuchElementException erro) {
+        return erro.getMessage();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String dadosInvalidos(IllegalArgumentException erro) {
+        return erro.getMessage();
+    }
+
     @Autowired
     private AreaEstudoService areaEstudoService;
     @GetMapping

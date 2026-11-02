@@ -13,14 +13,18 @@ public record PlanoIntercambioResponse(
         LocalDate inicioPrevisto,
         Integer duracaoMeses,
         Boolean dependeBolsa,
-        boolean cursoSelecionado
+        boolean cursoSelecionado,
+        Long cursoId,
+        String cursoNome
 ) {
     public static PlanoIntercambioResponse de(PlanoIntercambio plano) {
         return new PlanoIntercambioResponse(
                 plano.getId(), plano.getTitulo(), plano.getTipoIntercambio(),
                 plano.getStatus(), plano.getOrcamentoTotal(), plano.getMoeda(),
                 plano.getInicioPrevisto(), plano.getDuracaoMeses(),
-                plano.getDependeBolsa(), plano.getCurso() != null
+                plano.getDependeBolsa(), plano.getCurso() != null,
+                plano.getCurso() == null ? null : plano.getCurso().getId(),
+                plano.getCurso() == null ? null : plano.getCurso().getNome()
         );
     }
 }

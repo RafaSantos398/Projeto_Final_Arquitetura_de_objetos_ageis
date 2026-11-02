@@ -2,7 +2,6 @@ package com.berxy.projeto.ModeloTarefa;
 
 import jakarta.persistence.*;
 
-import java.util.Objects;
 
 @Entity
 @Table(name = "modelo_tarefa")
@@ -48,14 +47,14 @@ public class ModeloTarefa {
                 descricao, "Descrição", 400
         );
 
-        CategoriaTarefa categoriaValidada = Objects.requireNonNull(
-                categoria, "A categoria é obrigatória."
-        );
+        if (categoria == null) {
+            throw new IllegalArgumentException("A categoria é obrigatória.");
+        }
 
         // Altera os campos somente depois de validar todos.
         this.titulo = tituloValidado;
         this.descricao = descricaoValidada;
-        this.categoria = categoriaValidada;
+        this.categoria = categoria;
     }
 
     public void ativar() {

@@ -10,6 +10,12 @@ import java.util.List;
 @RequestMapping("/modelos-tarefa")
 public class ModeloTarefaController {
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public String dadosInvalidos(IllegalArgumentException erro) {
+        return erro.getMessage();
+    }
+
     @Autowired
     private ModeloTarefaService modeloTarefaService;
 

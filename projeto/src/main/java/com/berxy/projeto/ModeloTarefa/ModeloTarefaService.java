@@ -2,11 +2,11 @@ package com.berxy.projeto.ModeloTarefa;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.Banner;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ModeloTarefaService {
@@ -23,7 +23,7 @@ public class ModeloTarefaService {
 
     public ModeloTarefa GetByid(Long id){
         return modeloTarefaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Modelo nao encontrado"));}
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Modelo não encontrado."));}
 
     public ModeloTarefa atualizarModelo(Long id, String titulo, String descricao, CategoriaTarefa categoria){
         ModeloTarefa modelo = GetByid(id);

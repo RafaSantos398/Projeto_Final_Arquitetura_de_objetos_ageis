@@ -9,7 +9,7 @@ import java.util.Locale;
 
 @Service
 @Transactional(readOnly = true)
-public class UserService {
+public class UserService implements org.springframework.security.core.userdetails.UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -51,6 +51,17 @@ public class UserService {
 
     public List<User> findAll() {
         return userRepository.findAllByActiveTrue();
+    }
+
+    // Busca no banco e devolve UserDetails, como nas Aulas 09 e 13.
+    @Override
+    public org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String email) {
+        User usuario = userRepository.findByEmail(normalizeEmail(email))
+                .filter(User::isActive)
+                .orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException("Credenciais inválidas."));
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(usuario.getEmail()).password(usuario.getPasswordHash())
+                .roles(usuario.getRole().name()).build();
     }
 
     @Transactional

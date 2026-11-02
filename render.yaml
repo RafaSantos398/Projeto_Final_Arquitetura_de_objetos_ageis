@@ -1,0 +1,26 @@
+# Apenas o backend. Reutiliza o PostgreSQL existente, sem criar outro banco.
+services:
+  - type: web
+    name: berxy-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: feat/tarefasplano
+    dockerfilePath: ./projeto/Dockerfile
+    dockerContext: ./projeto
+    autoDeployTrigger: "off"
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=50.0
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_ORIGINS
+        value: http://localhost:5173,http://127.0.0.1:5173

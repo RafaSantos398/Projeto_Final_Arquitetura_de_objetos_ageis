@@ -1,4 +1,5 @@
 package com.berxy.projeto.auth.dto;
 
-public class AuthResponse {
-}
+import com.berxy.projeto.user.dto.UserResponse;
+
+public record AuthResponse(String token, UserResponse usuario) { }

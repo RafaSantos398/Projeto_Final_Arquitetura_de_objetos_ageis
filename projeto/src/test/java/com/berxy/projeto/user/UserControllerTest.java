@@ -28,6 +28,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class UserControllerTest {
 
+    @Autowired org.springframework.web.context.WebApplicationContext context;
+
+    @org.junit.jupiter.api.BeforeEach
+    void autenticarAdministrador() throws Exception {
+        mockMvc = com.berxy.projeto.AutenticacaoTeste.comoAdministrador(context);
+    }
+
     private static final String PASSWORD = "senha-forte";
 
     @Autowired
@@ -138,8 +145,9 @@ class UserControllerTest {
 
         mockMvc.perform(get("/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(active.getId()));
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[?(@.id == " + active.getId() + ")]").isNotEmpty())
+                .andExpect(jsonPath("$[?(@.id == " + inactive.getId() + ")]").isEmpty());
 
         mockMvc.perform(get("/users/{id}", inactive.getId()))
                 .andExpect(status().isNotFound());

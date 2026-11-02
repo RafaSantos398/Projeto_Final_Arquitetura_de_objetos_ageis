@@ -1,10 +1,12 @@
 package com.berxy.projeto.TarefaPlano;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/planos-intercambio/{idPlano}/tarefas")
@@ -37,6 +39,15 @@ public class TarefaPlanoController {
         return TarefaPlanoResponse.de(
                 tarefaPlanoService.gerarTarefa(idPlano, dados.modeloOrigemId())
         );
+    }
+
+    @PostMapping("/gerar-checklist")
+    public List<TarefaPlanoResponse> gerarChecklist(@PathVariable("idPlano") Long idPlano) {
+        List<TarefaPlanoResponse> respostas = new ArrayList<>();
+        for (TarefaPlano tarefa : tarefaPlanoService.gerarChecklist(idPlano)) {
+            respostas.add(TarefaPlanoResponse.de(tarefa));
+        }
+        return respostas;
     }
 
     @PatchMapping("/{idTarefa}/iniciar")
@@ -72,5 +83,17 @@ public class TarefaPlanoController {
         return TarefaPlanoResponse.de(
                 tarefaPlanoService.alterarPrazo(idPlano, idTarefa, dados.prazo())
         );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> tratarDadosInvalidos(IllegalArgumentException erro) {
+        return Map.of("mensagem", erro.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, String> tratarConflito(IllegalStateException erro) {
+        return Map.of("mensagem", erro.getMessage());
     }
 }

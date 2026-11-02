@@ -18,7 +18,10 @@ public class ProficienciaIdioma {
     }
 
     public ProficienciaIdioma(String idioma, NivelProficiencia nivel) {
-        this.idioma = idioma;
+        if (idioma == null || !idioma.trim().matches("[a-zA-Z]{2}(-[a-zA-Z]{2})?"))
+            throw new IllegalArgumentException("Idioma deve usar codigo como en ou pt-BR");
+        if (nivel == null) throw new IllegalArgumentException("Nivel de proficiencia obrigatorio");
+        this.idioma = idioma.trim().toLowerCase(java.util.Locale.ROOT);
         this.nivel = nivel;
     }
 

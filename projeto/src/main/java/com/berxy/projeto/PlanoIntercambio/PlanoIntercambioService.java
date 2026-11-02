@@ -3,13 +3,17 @@ package com.berxy.projeto.PlanoIntercambio;
 import com.berxy.projeto.Curso.Curso;
 import com.berxy.projeto.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@Transactional
 public class PlanoIntercambioService {
     @Autowired
     private PlanoIntercambioRepository planoIntercambioRepository;
@@ -20,13 +24,20 @@ public class PlanoIntercambioService {
     @Autowired
     private PlanoCursoRepository planoCursoRepository;
 
+    @Transactional(readOnly = true)
     public List<PlanoIntercambio> list() {
         return planoIntercambioRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public List<PlanoIntercambio> listarDoUsuario(Long usuarioId) {
+        return planoIntercambioRepository.findByUserIdOrderByIdAsc(usuarioId);
+    }
+
+    @Transactional(readOnly = true)
     public PlanoIntercambio GetByid(Long id) {
         return planoIntercambioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Plano nao encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plano não encontrado."));
     }
 
     public PlanoIntercambio adicionarPlano(
@@ -35,7 +46,8 @@ public class PlanoIntercambioService {
             LocalDate inicioPrevisto, Integer duracaoMeses, Boolean dependeBolsa
     ) {
         User usuario = planoUsuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuario nao encontrado"));
+                .filter(User::isActive)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado."));
 
         PlanoIntercambio plano = new PlanoIntercambio(
                 usuario, titulo, tipoIntercambio, status
@@ -63,7 +75,7 @@ public class PlanoIntercambioService {
     public PlanoIntercambio selecionarCurso(Long id, Long cursoId) {
         PlanoIntercambio plano = GetByid(id);
         Curso curso = planoCursoRepository.findById(cursoId)
-                .orElseThrow(() -> new RuntimeException("Curso nao encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Curso não encontrado."));
 
         plano.selecionarCurso(curso);
         return planoIntercambioRepository.save(plano);

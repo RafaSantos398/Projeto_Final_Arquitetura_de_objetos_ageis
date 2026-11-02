@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/planos-intercambio")
@@ -13,10 +14,16 @@ public class PlanoIntercambioController {
     @Autowired
     private PlanoIntercambioService planoIntercambioService;
 
+    @Autowired
+    private com.berxy.projeto.security.AcessoService acesso;
+
     @GetMapping
-    public List<PlanoIntercambioResponse> list() {
+    public List<PlanoIntercambioResponse> list(org.springframework.security.core.Authentication authentication) {
         List<PlanoIntercambioResponse> respostas = new ArrayList<>();
-        for (PlanoIntercambio plano : planoIntercambioService.list()) {
+        var usuario = acesso.usuarioAtual(authentication);
+        List<PlanoIntercambio> planos = usuario.getRole() == com.berxy.projeto.user.Role.ADMIN
+                ? planoIntercambioService.list() : planoIntercambioService.listarDoUsuario(usuario.getId());
+        for (PlanoIntercambio plano : planos) {
             respostas.add(PlanoIntercambioResponse.de(plano));
         }
         return respostas;
@@ -24,9 +31,12 @@ public class PlanoIntercambioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PlanoIntercambioResponse salvar(@RequestBody PlanoIntercambioRequest dados) {
+    public PlanoIntercambioResponse salvar(@RequestBody PlanoIntercambioRequest dados,
+                                          org.springframework.security.core.Authentication authentication) {
+        Long usuarioId = dados.usuarioId() == null ? acesso.usuarioAtual(authentication).getId() : dados.usuarioId();
+        acesso.exigirUsuario(authentication, usuarioId);
         PlanoIntercambio plano = planoIntercambioService.adicionarPlano(
-                dados.usuarioId(), dados.titulo(), dados.tipoIntercambio(), dados.status(),
+                usuarioId, dados.titulo(), dados.tipoIntercambio(), dados.status(),
                 dados.orcamentoTotal(), dados.moeda(), dados.inicioPrevisto(),
                 dados.duracaoMeses(), dados.dependeBolsa()
         );
@@ -70,5 +80,17 @@ public class PlanoIntercambioController {
         return PlanoIntercambioResponse.de(
                 planoIntercambioService.alterarStatus(idPlano, dados.status())
         );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> tratarDadosInvalidos(IllegalArgumentException erro) {
+        return Map.of("mensagem", erro.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, String> tratarConflito(IllegalStateException erro) {
+        return Map.of("mensagem", erro.getMessage());
     }
 }
