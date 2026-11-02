@@ -4,8 +4,11 @@
 
 Backend publicado em 02/11/2026: **https://berxy-api.onrender.com**.
 O serviço berxy-api está Live, no plano Free, em Oregon, usando Docker e o
-PostgreSQL existente. Código atual publicado: 5f69009, branch feat/tarefasplano.
+PostgreSQL existente. Código do quadro compacto: 103e82b, branch feat/tarefasplano.
 A mesma versão do código também foi enviada para main.
+
+O quadro compacto usa PATCH /planos-intercambio/{id}/tarefas/{idTarefa}/status.
+Esta atualização não exige migração e passou nos 69 testes do build Docker.
 
 A versão 5f69009 inclui checklists por tema, tarefas próprias e finanças.
 A migração 20261102-checklists-financas.sql foi aplicada no Render em transação,
