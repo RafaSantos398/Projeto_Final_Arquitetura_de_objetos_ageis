@@ -99,6 +99,50 @@ class FluxosPlanejamentoTest {
     }
 
     @Test
+    void anotacoesPersistemSemAlterarChecklistEPermitemApagar() throws Exception {
+        Cenario c = cenario(false);
+        mvc.perform(post(rota(c) + "/gerar-temas").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"temas\":[\"MORADIA\"]}")).andExpect(status().isOk());
+        Long id = tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).getFirst().getId();
+        String path = rota(c) + "/" + id + "/anotacoes";
+        mvc.perform(get(path)).andExpect(status().isOk()).andExpect(jsonPath("$.texto").value(""));
+        mvc.perform(patch(rota(c) + "/{id}/concluir", id)).andExpect(status().isOk());
+        Instant conclusao = tarefas.findById(id).orElseThrow().getConcluidaEm();
+        mvc.perform(put(path).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"texto\":\"Moradia A: 600 EUR\\nVantagem: perto do curso\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.atualizadoEm").isNotEmpty());
+        mvc.perform(post(rota(c) + "/gerar-temas").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"temas\":[\"MORADIA\"]}")).andExpect(status().isOk());
+        mvc.perform(get(path)).andExpect(jsonPath("$.texto").value("Moradia A: 600 EUR\nVantagem: perto do curso"));
+        assertEquals(conclusao, tarefas.findById(id).orElseThrow().getConcluidaEm());
+        mvc.perform(put(path).contentType(MediaType.APPLICATION_JSON).content("{\"texto\":\"\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.texto").value(""));
+        mvc.perform(get(path)).andExpect(jsonPath("$.texto").value(""));
+    }
+
+    @Test
+    void anotacoesValidamLimiteEProtegemOutrosPlanosEUsuarios() throws Exception {
+        Cenario c = cenario(false);
+        Cenario outro = cenario(false);
+        mvc.perform(post(rota(c)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"titulo\":\"Privada\",\"categoria\":\"OUTROS\"}")).andExpect(status().isCreated());
+        Long id = tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).getFirst().getId();
+        String path = rota(c) + "/" + id + "/anotacoes";
+        mvc.perform(put(path).contentType(MediaType.APPLICATION_JSON).content("{\"texto\":\"" + "x".repeat(10000) + "\"}"))
+                .andExpect(status().isOk());
+        for (String body : java.util.List.of("{}", "{\"texto\":null}", "{\"texto\":\"" + "x".repeat(10001) + "\"}")) {
+            mvc.perform(put(path).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
+        }
+        mvc.perform(get(rota(outro) + "/{id}/anotacoes", id)).andExpect(status().isNotFound());
+        String token = context.getBean(com.berxy.projeto.security.JwtService.class)
+                .generateToken(usuarios.findById(outro.usuarioId()).orElseThrow().getEmail());
+        mvc.perform(get(path).header("Authorization", "Bearer " + token)).andExpect(status().isForbidden());
+        mvc.perform(put(path).header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"texto\":\"indevido\"}")).andExpect(status().isForbidden());
+        assertEquals(10000, tarefas.findById(id).orElseThrow().getAnotacoes().length());
+    }
+
+    @Test
     void quadroPermiteTodasAsMovimentacoesEPreservaConclusaoRepetida() throws Exception {
         Cenario c = cenario(false);
         mvc.perform(post(rota(c)).contentType(MediaType.APPLICATION_JSON)

@@ -14,6 +14,18 @@ public class TarefaPlanoController {
     @Autowired
     private TarefaPlanoService tarefaPlanoService;
 
+    @GetMapping("/{idTarefa}/anotacoes")
+    public AnotacoesTarefaResponse anotacoes(@PathVariable("idPlano") Long idPlano,
+            @PathVariable("idTarefa") Long idTarefa) {
+        return AnotacoesTarefaResponse.de(tarefaPlanoService.GetByid(idPlano, idTarefa));
+    }
+
+    @PutMapping("/{idTarefa}/anotacoes")
+    public AnotacoesTarefaResponse salvarAnotacoes(@PathVariable("idPlano") Long idPlano,
+            @PathVariable("idTarefa") Long idTarefa, @RequestBody TarefaPlanoRequest.AnotacoesRequest dados) {
+        return AnotacoesTarefaResponse.de(tarefaPlanoService.atualizarAnotacoes(idPlano, idTarefa, dados.texto()));
+    }
+
     @PatchMapping("/{idTarefa}/status")
     public TarefaPlanoResponse mover(@PathVariable("idPlano") Long idPlano,
             @PathVariable("idTarefa") Long idTarefa, @RequestBody TarefaPlanoRequest.StatusRequest dados) {

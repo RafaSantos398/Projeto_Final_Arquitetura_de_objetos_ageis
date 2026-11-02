@@ -597,3 +597,25 @@ Builds Linux aprovados com 58 testes do backend e 8 do frontend. Outros 20
 checks HTTP pelo proxy passaram em H2 descartável. O conjunto prod foi iniciado
 com sucesso contra o PostgreSQL, com validação de esquema e containers saudáveis.
 Não foram inseridos dados de teste no banco de produção nesta rodada Docker.
+
+## Anotações por tarefa
+
+Cada tarefa tem um caderno próprio acessível por “Abrir anotações” no card
+expandido. A página oferece texto livre e modelos opcionais por tema; os modelos
+só podem preencher um caderno vazio. Moradia inclui custos, vantagens,
+desvantagens, contatos e decisão. Texto existente nunca é substituído pelo modelo.
+
+Contrato autenticado: GET e PUT
+`/planos-intercambio/{planoId}/tarefas/{tarefaId}/anotacoes`.
+PUT recebe `{ "texto": "..." }`, até 10.000 caracteres; texto vazio apaga o
+conteúdo. Retorno: `{ "tarefaId": 1, "texto": "...", "atualizadoEm": "..." }`.
+As anotações ficam no banco, separadas da descrição e do status da tarefa.
+Antes de publicar, aplicar `projeto/database/migrations/20261102-anotacoes-tarefas.sql`;
+publicar primeiro o backend e depois o frontend. A migração adiciona somente
+campos opcionais, sem alterar tarefas existentes. Autorização segue o acesso ao
+plano; usuário comum não pode consultar ou alterar cadernos de outra pessoa.
+
+Validação do caderno: 71 testes do backend e 8 do frontend aprovados no build
+Docker. Migração conferida no PostgreSQL 18 local, incluindo repetição sem erro.
+Em produção, os dois campos opcionais foram adicionados em transação, com
+comparação do conteúdo anterior das tarefas: preservado.

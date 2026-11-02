@@ -83,6 +83,13 @@ public class TarefaPlanoService {
     }
 
     @Transactional
+    public TarefaPlano atualizarAnotacoes(Long planoId, Long id, String texto) {
+        TarefaPlano tarefa = GetByid(planoId, id);
+        tarefa.atualizarAnotacoes(texto);
+        return tarefaPlanoRepository.save(tarefa);
+    }
+
+    @Transactional
     public TarefaPlano gerarTarefa(Long planoId, Long modeloOrigemId) {
         PlanoIntercambio plano = planoIntercambioService.GetByid(planoId);
         if (modeloOrigemId == null) {

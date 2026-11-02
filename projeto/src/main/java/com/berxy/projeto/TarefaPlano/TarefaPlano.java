@@ -57,6 +57,25 @@ public class TarefaPlano {
     @Column
     private Instant concluidaEm;
 
+    @Column(length = 10000)
+    private String anotacoes;
+
+    @Column
+    private Instant anotacoesAtualizadasEm;
+
+    public String getAnotacoes() { return anotacoes == null ? "" : anotacoes; }
+    public Instant getAnotacoesAtualizadasEm() { return anotacoesAtualizadasEm; }
+
+    public void atualizarAnotacoes(String texto) {
+        if (texto == null || texto.length() > 10000) {
+            throw new IllegalArgumentException("Informe anotações de até 10000 caracteres; use texto vazio para apagar.");
+        }
+        if (!getAnotacoes().equals(texto)) {
+            anotacoes = texto;
+            anotacoesAtualizadasEm = Instant.now();
+        }
+    }
+
     protected TarefaPlano() {
         // Exigido pela JPA.
     }
