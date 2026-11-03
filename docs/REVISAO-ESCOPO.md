@@ -103,3 +103,12 @@ inclui geração e edição de backend por IA. As simplificações não mudam es
 O grupo deve apresentar o processo com transparência, esclarecer a aceitação dessa
 participação e fazer suas próprias revisões. Este relatório não deve ser usado para
 declarar autoria inexistente ou afirmar que estudar o código, por si só, elimina a regra.
+
+
+## Cursos pessoais em 03/11/2026
+
+Atualização usa a entidade Curso, associação ManyToOne com User/curso de apoio, enum,
+campos de data e texto e operações usuais de repository. Etiquetas são convertidas
+pela entidade para uma coluna textual, sem introduzir coleção JPA ou biblioteca.
+React usa formulários e checkboxes nativos. Não foram adicionadas dependências.
+A migração é necessária para manter persistência e distingue catálogo de curso pessoal.

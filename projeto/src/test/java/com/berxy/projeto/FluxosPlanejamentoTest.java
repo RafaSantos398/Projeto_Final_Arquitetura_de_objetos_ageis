@@ -83,6 +83,75 @@ class FluxosPlanejamentoTest {
     }
 
     @Test
+    void usuarioCriaCursosPrivadosComEtiquetasEAgendaSemDuplicar() throws Exception {
+        Cenario c = cenario(false);
+        Cenario outro = cenario(false);
+        String token = context.getBean(com.berxy.projeto.security.JwtService.class)
+                .generateToken(usuarios.findById(c.usuarioId()).orElseThrow().getEmail());
+        String outroToken = context.getBean(com.berxy.projeto.security.JwtService.class)
+                .generateToken(usuarios.findById(outro.usuarioId()).orElseThrow().getEmail());
+        String corpo = """
+                {"nome":"Organização financeira e inglês","instituicaoNome":"Minha plataforma","idioma":"pt-BR",
+                "etiquetas":["FINANCEIRO","LINGUISTICO","FINANCEIRO"],"inicioPrevisto":"2027-01-01",
+                "fimPrevisto":"2027-02-01","link":"https://example.com/curso"}
+                """;
+        mvc.perform(post("/cursos/pessoais").header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.pessoal").value(true))
+                .andExpect(jsonPath("$.etiquetas.length()").value(2)).andExpect(jsonPath("$.instituicaoId").isEmpty());
+        Long cursoId = cursos.findAll().stream().filter(curso -> curso.isPessoal()).findFirst().orElseThrow().getId();
+        assertEquals(c.usuarioId(), cursos.findById(cursoId).orElseThrow().getProprietario().getId());
+        mvc.perform(get("/cursos").header("Authorization", "Bearer " + outroToken))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2));
+        mvc.perform(get("/cursos/{id}", cursoId).header("Authorization", "Bearer " + outroToken))
+                .andExpect(status().isForbidden());
+        mvc.perform(put("/cursos/pessoais/{id}", cursoId).header("Authorization", "Bearer " + outroToken)
+                .contentType(MediaType.APPLICATION_JSON).content(corpo)).andExpect(status().isForbidden());
+        String agenda = rota(c) + "/curso";
+        String agendar = "{\"cursoId\":" + cursoId + "}";
+        mvc.perform(post(agenda).header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(agendar))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.cursoApoioId").value(cursoId))
+                .andExpect(jsonPath("$.prazo").value("2027-02-01")).andExpect(jsonPath("$.categoria").value("FINANCEIRO"));
+        Long tarefaId = tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).getFirst().getId();
+        mvc.perform(patch(rota(c) + "/{id}/concluir", tarefaId).header("Authorization", "Bearer " + token)).andExpect(status().isOk());
+        mvc.perform(post(agenda).header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(agendar))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CONCLUIDA"));
+        assertEquals(1, tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).size());
+        mvc.perform(post(rota(outro) + "/curso").header("Authorization", "Bearer " + outroToken)
+                .contentType(MediaType.APPLICATION_JSON).content(agendar)).andExpect(status().isForbidden());
+        mvc.perform(post(rota(outro) + "/curso").header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content(agendar)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void cursosPessoaisValidamDatasLinksEtiquetasEPreservamEtapaNaEdicao() throws Exception {
+        Cenario c = cenario(false);
+        String token = context.getBean(com.berxy.projeto.security.JwtService.class)
+                .generateToken(usuarios.findById(c.usuarioId()).orElseThrow().getEmail());
+        String corpo = """
+                {"nome":"Inglês","idioma":"en","etiquetas":["LINGUISTICO"],"inicioPrevisto":"2027-01-01","fimPrevisto":"2027-02-01"}
+                """;
+        for (String invalido : java.util.List.of(corpo.replace("2027-02-01", "2026-01-01"),
+                corpo.replace("[\"LINGUISTICO\"]", "[]"), corpo.replace("LINGUISTICO", "NAO_EXISTE"),
+                corpo.replace("{", "{\"link\":\"javascript:alert(1)\","))) {
+            mvc.perform(post("/cursos/pessoais").header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON).content(invalido)).andExpect(status().isBadRequest());
+        }
+        mvc.perform(post("/cursos/pessoais").header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content(corpo)).andExpect(status().isCreated());
+        Long id = cursos.findAll().stream().filter(curso -> curso.isPessoal()).findFirst().orElseThrow().getId();
+        mvc.perform(post(rota(c) + "/curso").header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"cursoId\":" + id + "}")).andExpect(status().isOk());
+        mvc.perform(put("/cursos/pessoais/{id}", id).header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content(corpo.replace("2027-02-01", "2027-03-01")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.fimPrevisto").value("2027-03-01"));
+        assertEquals(LocalDate.of(2027, 2, 1), tarefas.findByPlanoIdOrderByIdAsc(c.planoId()).getFirst().getPrazo());
+        mvc.perform(patch("/planos-intercambio/{id}/curso", c.planoId()).header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"cursoId\":" + id + "}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void consultaDoPlanoRetornaOCursoSelecionadoAposRecarregar() throws Exception {
         Cenario cenario = cenario(true);
         mvc.perform(get("/planos-intercambio/{id}", cenario.planoId()))

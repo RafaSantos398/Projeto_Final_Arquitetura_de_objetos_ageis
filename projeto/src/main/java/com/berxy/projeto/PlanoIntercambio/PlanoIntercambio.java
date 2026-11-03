@@ -172,6 +172,7 @@ public class PlanoIntercambio {
     public BigDecimal getAporteMensal() { return aporteMensal == null ? BigDecimal.ZERO : aporteMensal; }
 
     public void selecionarCurso(Curso curso) {
+        if (curso != null && curso.isPessoal()) throw new IllegalArgumentException("Adicione cursos pessoais pelo cronograma do plano.");
         if (curso == null) {
             throw new IllegalArgumentException("O curso é obrigatório.");
         }

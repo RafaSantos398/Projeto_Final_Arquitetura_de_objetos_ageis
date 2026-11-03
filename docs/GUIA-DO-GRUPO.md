@@ -1,6 +1,6 @@
 # Guia do grupo sobre o Berxy
 
-Atualizado em 02/11/2026. Este manual explica o sistema que está implementado,
+Atualizado em 03/11/2026. Este manual explica o sistema que está implementado,
 como as classes colaboram e o que cada integrante precisa compreender para manter
 e apresentar o projeto. Os nomes dos arquivos correspondem ao repositório real.
 
@@ -54,7 +54,7 @@ interpretação adotada pelo professor.
 | Perfil 1 → 0..* ProficienciaIdioma | Idiomas são valores pertencentes ao perfil | ElementCollection de Embeddable |
 | Perfil 1 → 1..* nacionalidades | Ao preencher perfil, pelo menos uma nacionalidade | ElementCollection de strings |
 | User 1 → 0..* Plano | Cada plano tem um dono obrigatório | ManyToOne em Plano |
-| Instituicao 1 → 0..* Curso | Cada curso tem uma instituição | ManyToOne em Curso |
+| Instituicao 0..1 → 0..* Curso | Obrigatória no catálogo; opcional no curso pessoal | ManyToOne em Curso |
 | Curso * ↔ * ModeloTarefa | Um modelo pode ser reutilizado em cursos | ManyToMany; curso_modelo_tarefa |
 | Plano 0..1 → Curso | Planejamento pode começar sem escolher curso | ManyToOne opcional em Plano |
 | Plano * ↔ * AreaEstudo | Estrutura de interesses existente no domínio | ManyToMany; sem rota de associação na API atual |
@@ -126,7 +126,7 @@ administrativo. `dependeBolsa` é apenas uma marcação; não existe entidade Bo
 
 ## 9. Checklist e cadernos
 
-Há três origens: modelo associado ao curso, sugestão de tema e tarefa própria.
+Há quatro origens: modelo associado ao curso, sugestão de tema, tarefa própria e curso pessoal agendado.
 As seis coleções de sugestões são DOCUMENTOS, FINANCAS, MORADIA, VIAGEM, IDIOMA e
 ESTUDOS, com quatro itens cada. Gerar de novo é aditivo: não apaga edições, prazos,
 anotações ou conclusão. A chave estável da sugestão e as restrições únicas do banco
@@ -195,7 +195,7 @@ usa create-drop: os dados são temporários. Não executar os testes sobre publi
 
 ## 13. O que os testes demonstram
 
-72 testes do backend passaram após a revisão de escopo; 8 testes do cliente HTTP do
+74 testes do backend passaram após a revisão de escopo; 8 testes do cliente HTTP do
 frontend também passaram. Eles verificam domínio, API, JWT, permissões, isolamento,
 validação, persistência de operações e cálculos financeiros. Build Docker executa a suíte.
 Isso dá evidência dos casos testados, não prova ausência de qualquer defeito ou carga alta.
@@ -240,3 +240,38 @@ ou domínio do código, conforme as observações finais da rubrica.
 [Catálogo de arquivos](ARQUIVOS-BACKEND.md) · [API](API.md) ·
 [Revisão de escopo](REVISAO-ESCOPO.md) · [Operação](VALIDACAO-E-DEPLOY.md) ·
 [Frontend](https://github.com/RafaSantos398/FrontEnd_zambas/blob/main/docs/GUIA-FRONTEND.md).
+
+
+## 17. Cursos criados pelo usuário
+
+Cursos pessoais usam a entidade Curso existente, com proprietario_id apontando para
+User. Catálogo antigo continua com dono null e instituição obrigatória na regra de
+cadastro administrativo. Curso pessoal tem dono obrigatório pelo método fábrica,
+instituição/plataforma em texto opcional e tipoIntercambio null, pois uma formação
+financeira ou cultural não é necessariamente o curso principal do intercâmbio.
+
+Etiquetas são um enum EtiquetaCurso com seis opções. A API recebe/devolve lista;
+a entidade armazena os nomes em uma coluna, sem coleção JPA extra. Há métodos que
+validam e convertem esse conteúdo; não expor a string interna como contrato da API.
+Datas são opcionais, mas término não pode anteceder início. Link, quando informado,
+deve ser HTTP/HTTPS com host e sem credencial embutida.
+
+CursoService identifica o usuário pelo SecurityContext e AcessoService. O JSON não
+escolhe o dono. GET /cursos devolve cursos do catálogo e os pessoais do usuário. Buscar
+ou editar pessoal de outro dono retorna 403; manter catálogos continua restrito a ADMIN.
+A administração da interface filtra os registros pessoais, que têm formulário próprio.
+
+POST /planos-intercambio/{idPlano}/tarefas/curso recebe cursoId. O filtro verifica o
+dono do plano; o service verifica acesso ao curso e a entidade exige mesmo proprietário.
+A tarefa guarda curso_apoio_id, com unicidade por plano/curso. O mesmo curso pode apoiar
+mais de um plano do mesmo dono. Seu prazo inicial é o término do curso; a descrição é
+copiada até o limite de 400 caracteres. A categoria deriva da primeira etiqueta na ordem
+do enum (Financeiro, Linguístico, Acadêmico, Profissional, Cultural, Outros).
+
+A etapa tem seu próprio estado, prazo e caderno. Repetir o agendamento retorna a etapa
+existente e não a reinicia. Alterar curso não altera etapas existentes; remover a tarefa
+permite adicioná-la de novo depois. A ação não matricula, compra nem paga um curso externo.
+
+Relações adicionais: User 0..1 → 0..* Curso (dono opcional para distinguir catálogo) e
+Curso 0..1 → 0..* TarefaPlano (origem de apoio opcional). Não foi criada entidade nova.
+A migração 20261103-cursos-pessoais.sql preserva dados existentes e é exigida no Render.

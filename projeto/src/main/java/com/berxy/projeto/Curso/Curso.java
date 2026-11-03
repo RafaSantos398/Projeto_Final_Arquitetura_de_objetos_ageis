@@ -19,8 +19,8 @@ public class Curso {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "instituicao_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "instituicao_id")
     private Instituicao instituicao;
 
     @Column(nullable = false, length = 100)
@@ -30,7 +30,7 @@ public class Curso {
     private String descricao;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column
     private TipoIntercambio tipoIntercambio;
 
     // Idioma em que o curso é ministrado, por exemplo "en" ou "pt-BR".
@@ -51,6 +51,84 @@ public class Curso {
             inverseJoinColumns = @JoinColumn(name = "modelo_tarefa_id")
     )
     private Set<ModeloTarefa> modelosTarefa = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "proprietario_id")
+    private com.berxy.projeto.user.User proprietario;
+
+    @Column(length = 100)
+    private String instituicaoInformada;
+    @Column(length = 120)
+    private String etiquetas;
+    @Column
+    private java.time.LocalDate inicioPrevisto;
+    @Column
+    private java.time.LocalDate fimPrevisto;
+    @Column(length = 500)
+    private String link;
+
+    public static Curso pessoal(com.berxy.projeto.user.User dono, CursoPessoalRequest dados) {
+        if (dono == null) throw new IllegalArgumentException("O proprietário é obrigatório.");
+        Curso curso = new Curso();
+        curso.proprietario = dono;
+        curso.ativo = true;
+        curso.atualizarPessoal(dados);
+        return curso;
+    }
+
+    public void atualizarPessoal(CursoPessoalRequest dados) {
+        if (proprietario == null) throw new IllegalStateException("Este curso pertence ao catálogo.");
+        String novoNome = validarTexto(dados.nome(), "Nome", 100, true);
+        String novaDescricao = validarTexto(dados.descricao(), "Descrição", 500, false);
+        String novaInstituicao = validarTexto(dados.instituicaoNome(), "Instituição", 100, false);
+        String novoIdioma = validarIdioma(dados.idioma());
+        String novoLink = validarTexto(dados.link(), "Link", 500, false);
+        if (novoLink != null) {
+            try {
+                java.net.URI uri = java.net.URI.create(novoLink);
+                if (!("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))
+                        || uri.getHost() == null || uri.getUserInfo() != null) throw new IllegalArgumentException();
+            } catch (IllegalArgumentException erro) {
+                throw new IllegalArgumentException("Informe um link HTTP ou HTTPS válido.");
+            }
+        }
+        if (dados.inicioPrevisto() != null && dados.fimPrevisto() != null
+                && dados.fimPrevisto().isBefore(dados.inicioPrevisto())) {
+            throw new IllegalArgumentException("O término não pode ser anterior ao início.");
+        }
+        if (dados.etiquetas() == null || dados.etiquetas().isEmpty()) {
+            throw new IllegalArgumentException("Selecione pelo menos uma etiqueta.");
+        }
+        for (EtiquetaCurso etiqueta : dados.etiquetas()) {
+            if (etiqueta == null) throw new IllegalArgumentException("Etiqueta inválida.");
+        }
+        java.util.List<String> nomes = new ArrayList<>();
+        for (EtiquetaCurso etiqueta : EtiquetaCurso.values()) {
+            if (dados.etiquetas().contains(etiqueta)) nomes.add(etiqueta.name());
+        }
+        this.nome = novoNome;
+        this.descricao = novaDescricao;
+        this.instituicaoInformada = novaInstituicao;
+        this.idioma = novoIdioma;
+        this.link = novoLink;
+        this.inicioPrevisto = dados.inicioPrevisto();
+        this.fimPrevisto = dados.fimPrevisto();
+        this.etiquetas = String.join(",", nomes);
+    }
+
+    public com.berxy.projeto.user.User getProprietario() { return proprietario; }
+    public boolean isPessoal() { return proprietario != null; }
+    public String getInstituicaoNome() { return instituicao != null ? instituicao.getNome() : instituicaoInformada; }
+    public java.time.LocalDate getInicioPrevisto() { return inicioPrevisto; }
+    public java.time.LocalDate getFimPrevisto() { return fimPrevisto; }
+    public String getLink() { return link; }
+    public java.util.List<EtiquetaCurso> getEtiquetas() {
+        java.util.List<EtiquetaCurso> resultado = new ArrayList<>();
+        if (etiquetas != null && !etiquetas.isEmpty()) {
+            for (String nome : etiquetas.split(",")) resultado.add(EtiquetaCurso.valueOf(nome));
+        }
+        return resultado;
+    }
 
     protected Curso() {
         // Exigido pela JPA.

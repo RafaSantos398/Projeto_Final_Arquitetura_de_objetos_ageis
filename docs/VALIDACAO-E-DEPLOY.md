@@ -94,3 +94,18 @@ Não executar rollback de dados ou exclusão de tabelas para desfazer mudança d
 O plano Free pode suspender a API após inatividade: aquecer antes da apresentação.
 Recarregar o frontend exige login porque o Bearer fica em memória. O frontend não
 possui modo offline, refresh token ou mesclagem de cadernos editados em duas abas.
+
+
+## Cursos pessoais em 03/11/2026
+
+74 testes do backend e 8 do frontend passaram no build Docker. Migração
+20261103-cursos-pessoais.sql conferida duas vezes em PostgreSQL 18 local, preservando
+curso/tarefa antigos, e imagem iniciada com perfil prod/validate nesse banco isolado.
+Interface validada no H2 com cadastro, múltiplas etiquetas e criação de etapa no plano.
+Aplicar a migração no banco publicado antes de publicar o backend e depois o frontend.
+
+
+A migração de cursos pessoais foi aplicada ao PostgreSQL publicado em transação,
+com comparação do conteúdo anterior de cursos e tarefas: preservado. O teste de
+navegador também validou edição, filtro, adição pelo menu e pelo plano, etapa única
+com prazo e acesso ao caderno. Nenhum dado de teste foi inserido no banco publicado.

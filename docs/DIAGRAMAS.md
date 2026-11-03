@@ -44,6 +44,9 @@ classDiagram
         TipoIntercambio tipoIntercambio
         String idioma
         boolean ativo
+        String etiquetas
+        LocalDate inicioPrevisto
+        LocalDate fimPrevisto
         adicionarModeloTarefa(modelo)
     }
     class ModeloTarefa {
@@ -79,13 +82,15 @@ classDiagram
     User "1" -- "0..1" PerfilINtercambista : perfil
     PerfilINtercambista "1" *-- "0..*" ProficienciaIdioma : valores do perfil
     User "1" -- "0..*" PlanoIntercambio : dono
-    Instituicao "1" -- "0..*" Curso : oferece
+    Instituicao "0..1" -- "0..*" Curso : oferece
     Curso "0..*" -- "0..*" ModeloTarefa : modelos associados
     Curso "0..1" -- "0..*" PlanoIntercambio : escolhido
     PlanoIntercambio "0..*" -- "0..*" AreaEstudo : interesses no dominio
     PlanoIntercambio "1" -- "0..*" TarefaPlano : checklist
     ModeloTarefa "0..1" -- "0..*" TarefaPlano : origem opcional
     PlanoIntercambio "1" -- "0..*" PreparacaoIdioma : metas
+    User "0..1" -- "0..*" Curso : proprietario de curso pessoal
+    Curso "0..1" -- "0..*" TarefaPlano : curso de apoio
 ```
 
 A multiplicidade junto à classe indica quantas instâncias dela podem se relacionar
@@ -163,3 +168,5 @@ O Compose padrão na porta 3000 também pode acessar PostgreSQL com credenciais 
 ambiente. O diagrama de desenvolvimento representa especificamente o modo `-Local`
 usado nas verificações, que não grava no banco publicado. A Vercel não executa o
 Nginx do Compose e não usa o prefixo `/api` na URL pública do backend.
+
+Curso do catálogo exige instituição pela regra de cadastro; curso pessoal tem dono, instituição livre e etiquetas. Tarefa pode ter curso de apoio.

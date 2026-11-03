@@ -14,6 +14,30 @@ import java.util.List;
 @Service
 @Transactional
 public class CursoService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.berxy.projeto.security.AcessoService acesso;
+
+    private com.berxy.projeto.user.User atual() {
+        return acesso.usuarioAtual(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    private void conferirLeitura(Curso curso) {
+        if (curso.isPessoal() && !curso.getProprietario().getId().equals(atual().getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Este curso pertence a outro usuário.");
+        }
+    }
+
+    public Curso criarPessoal(CursoPessoalRequest dados) {
+        return repository.save(Curso.pessoal(atual(), dados));
+    }
+
+    public Curso atualizarPessoal(Long id, CursoPessoalRequest dados) {
+        Curso curso = buscar(id);
+        if (!curso.isPessoal()) throw new IllegalArgumentException("Use a administração para editar o catálogo.");
+        curso.atualizarPessoal(dados);
+        return repository.save(curso);
+    }
+
     private final CursoRepository repository;
     private final InstituicaoRepository instituicaoRepository;
     private final ModeloTarefaRepository modeloTarefaRepository;
@@ -30,17 +54,22 @@ public class CursoService {
 
     @Transactional(readOnly = true)
     public List<Curso> list(Long instituicaoId) {
-        if (instituicaoId == null) {
-            return repository.findAll();
+        if (instituicaoId != null) buscarInstituicao(instituicaoId);
+        com.berxy.projeto.user.User dono = atual();
+        List<Curso> visiveis = new java.util.ArrayList<>();
+        List<Curso> encontrados = instituicaoId == null ? repository.findAll() : repository.findByInstituicaoId(instituicaoId);
+        for (Curso curso : encontrados) {
+            if (!curso.isPessoal() || curso.getProprietario().getId().equals(dono.getId())) visiveis.add(curso);
         }
-        buscarInstituicao(instituicaoId);
-        return repository.findByInstituicaoId(instituicaoId);
+        return visiveis;
     }
 
     @Transactional(readOnly = true)
     public Curso buscar(Long id) {
-        return repository.findById(id).orElseThrow(() ->
+        Curso curso = repository.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Curso não encontrado."));
+        conferirLeitura(curso);
+        return curso;
     }
 
     public Curso adicionarCurso(CursoRequest dados) {
@@ -54,6 +83,7 @@ public class CursoService {
 
     public Curso atualizarCurso(Long id, CursoRequest dados) {
         Curso curso = buscar(id);
+        if (curso.isPessoal()) throw new IllegalArgumentException("Use a edição de curso pessoal.");
         Instituicao instituicao = buscarInstituicao(dados.instituicaoId());
         curso.atualizarConteudo(
                 instituicao, dados.nome(), dados.descricao(),
@@ -82,12 +112,14 @@ public class CursoService {
 
     public List<ModeloTarefa> associarModelo(Long cursoId, Long modeloId) {
         Curso curso = buscar(cursoId);
+        if (curso.isPessoal()) throw new IllegalArgumentException("Cursos pessoais são organizados pelo cronograma.");
         curso.adicionarModeloTarefa(buscarModelo(modeloId));
         return repository.save(curso).getModelosTarefaAtivos();
     }
 
     public List<ModeloTarefa> desassociarModelo(Long cursoId, Long modeloId) {
         Curso curso = buscar(cursoId);
+        if (curso.isPessoal()) throw new IllegalArgumentException("Cursos pessoais são organizados pelo cronograma.");
         curso.removerModeloTarefa(buscarModelo(modeloId));
         return repository.save(curso).getModelosTarefaAtivos();
     }

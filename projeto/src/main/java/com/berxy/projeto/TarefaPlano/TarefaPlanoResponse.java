@@ -14,7 +14,9 @@ public record TarefaPlanoResponse(
         Instant concluidaEm,
         com.berxy.projeto.ModeloTarefa.CategoriaTarefa categoria,
         TemaChecklist tema,
-        boolean personalizada
+        boolean personalizada,
+        Long cursoApoioId,
+        String cursoApoioNome
 ) {
     public static TarefaPlanoResponse de(TarefaPlano tarefa) {
         return new TarefaPlanoResponse(
@@ -22,7 +24,9 @@ public record TarefaPlanoResponse(
                 tarefa.getModeloOrigem() == null ? null : tarefa.getModeloOrigem().getId(),
                 tarefa.getTitulo(), tarefa.getDescricao(), tarefa.getStatus(),
                 tarefa.getPrazo(), tarefa.getConcluidaEm(), tarefa.getCategoria(), tarefa.getTema(),
-                tarefa.getModeloOrigem() == null && tarefa.getTema() == null
+                tarefa.getModeloOrigem() == null && tarefa.getTema() == null && tarefa.getCursoApoio() == null,
+                tarefa.getCursoApoio() == null ? null : tarefa.getCursoApoio().getId(),
+                tarefa.getCursoApoio() == null ? null : tarefa.getCursoApoio().getNome()
         );
     }
 }

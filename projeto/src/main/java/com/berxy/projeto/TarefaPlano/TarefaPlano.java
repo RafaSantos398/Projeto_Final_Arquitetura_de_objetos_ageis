@@ -14,7 +14,8 @@ import java.time.LocalDate;
         uniqueConstraints = {@UniqueConstraint(
                 name = "uk_tarefa_plano_modelo",
                 columnNames = {"plano_id", "modelo_origem_id"}
-        ), @UniqueConstraint(name = "uk_tarefa_plano_sugestao", columnNames = {"plano_id", "chave_sugestao"})}
+        ), @UniqueConstraint(name = "uk_tarefa_plano_sugestao", columnNames = {"plano_id", "chave_sugestao"}),
+                @UniqueConstraint(name = "uk_tarefa_plano_curso_apoio", columnNames = {"plano_id", "curso_apoio_id"})}
 )
 public class TarefaPlano {
 
@@ -29,6 +30,27 @@ public class TarefaPlano {
     @ManyToOne
     @JoinColumn(name = "modelo_origem_id")
     private ModeloTarefa modeloOrigem;
+
+    @ManyToOne
+    @JoinColumn(name = "curso_apoio_id")
+    private com.berxy.projeto.Curso.Curso cursoApoio;
+
+    public com.berxy.projeto.Curso.Curso getCursoApoio() { return cursoApoio; }
+
+    public static TarefaPlano deCurso(PlanoIntercambio plano, com.berxy.projeto.Curso.Curso curso) {
+        if (curso == null || !curso.isPessoal() || !curso.isAtivo()) {
+            throw new IllegalArgumentException("Selecione um curso pessoal ativo.");
+        }
+        if (!curso.getProprietario().getId().equals(plano.getUser().getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("O curso e o plano devem pertencer ao mesmo usuário.");
+        }
+        CategoriaTarefa categoria = curso.getEtiquetas().isEmpty() ? CategoriaTarefa.OUTROS : curso.getEtiquetas().getFirst().categoriaTarefa();
+        String descricao = curso.getDescricao() == null ? "Organizar os estudos e acompanhar este curso no plano." : curso.getDescricao();
+        if (descricao.length() > 400) descricao = descricao.substring(0, 400);
+        TarefaPlano tarefa = new TarefaPlano(plano, "Estudar: " + curso.getNome(), descricao, categoria, curso.getFimPrevisto());
+        tarefa.cursoApoio = curso;
+        return tarefa;
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(length = 32)

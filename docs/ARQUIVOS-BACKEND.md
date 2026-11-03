@@ -838,3 +838,29 @@ Não executar testes com limpeza de dados sobre o schema public de produção.
 ao grupo. `docs/GUIA-FRONTEND.md` é uma cópia do guia do repositório de frontend,
 incluída para permitir leitura conjunta. Ao mudar o frontend, atualizar também essa
 cópia antes de refazer o pacote. O código-fonte permanece nos dois repositórios.
+
+
+## Atualização de cursos pessoais em 03/11/2026
+
+A implementação agora tem 86 arquivos Java de produção. Complementos aos arquivos acima:
+
+| Arquivo | Responsabilidade atualizada |
+|---|---|
+| projeto/src/main/java/com/berxy/projeto/Curso/EtiquetaCurso.java | Enum de contribuição e conversão para categoria da tarefa |
+| projeto/src/main/java/com/berxy/projeto/Curso/CursoPessoalRequest.java | Record de nome, descrição, instituição livre, idioma, datas, link e etiquetas |
+| Curso/Curso.java | Acrescenta proprietário User, instituição em texto, etiquetas internas, início/término e link; fábrica pessoal e atualizarPessoal validam antes de mudar estado |
+| Curso/CursoService.java | criarPessoal/atualizarPessoal usam o usuário autenticado; list/buscar restringem dados pessoais ao dono |
+| Curso/CursoController.java | Acrescenta POST /pessoais e PUT /pessoais/{id}; mantém rotas administrativas do catálogo |
+| Curso/CursoResponse.java | Inclui pessoal, etiquetas, início, término e link; trata instituição null |
+| security/AcessoService.java | Permite criação/edição pessoal autenticada; propriedade é conferida pelo service |
+| TarefaPlano/TarefaPlano.java | Acrescenta cursoApoio e fábrica deCurso; exige mesmo dono e cria etapa com prazo inicial |
+| TarefaPlano/TarefaPlanoService.java | agendarCurso valida acesso e retorna etapa existente sem reiniciar progresso |
+| TarefaPlano/TarefaPlanoRepository.java | Consulta findByPlanoIdAndCursoApoioId |
+| TarefaPlano/TarefaPlanoController.java | POST /curso dentro das tarefas do plano |
+| TarefaPlano/TarefaPlanoRequest.java | CursoRequest interno com cursoId |
+| TarefaPlano/TarefaPlanoResponse.java | Acrescenta cursoApoioId/nome; curso de apoio não é marcado como tarefa própria sem origem |
+| PlanoIntercambio/PlanoIntercambio.java | Impede usar curso de apoio como curso principal do intercâmbio |
+| projeto/database/migrations/20261103-cursos-pessoais.sql | Acrescenta colunas e FKs; permite instituição/tipo null no curso pessoal e unicidade da etapa por plano/curso |
+
+FluxosPlanejamentoTest inclui isolamento entre donos, etiquetas, datas/links inválidos,
+agendamento repetido e preservação de prazo/progresso após edição do curso.

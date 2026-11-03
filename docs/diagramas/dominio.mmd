@@ -33,6 +33,9 @@ classDiagram
         TipoIntercambio tipoIntercambio
         String idioma
         boolean ativo
+        String etiquetas
+        LocalDate inicioPrevisto
+        LocalDate fimPrevisto
         adicionarModeloTarefa(modelo)
     }
     class ModeloTarefa {
@@ -68,10 +71,12 @@ classDiagram
     User "1" -- "0..1" PerfilINtercambista : perfil
     PerfilINtercambista "1" *-- "0..*" ProficienciaIdioma : valores do perfil
     User "1" -- "0..*" PlanoIntercambio : dono
-    Instituicao "1" -- "0..*" Curso : oferece
+    Instituicao "0..1" -- "0..*" Curso : oferece
     Curso "0..*" -- "0..*" ModeloTarefa : modelos associados
     Curso "0..1" -- "0..*" PlanoIntercambio : escolhido
     PlanoIntercambio "0..*" -- "0..*" AreaEstudo : interesses no dominio
     PlanoIntercambio "1" -- "0..*" TarefaPlano : checklist
     ModeloTarefa "0..1" -- "0..*" TarefaPlano : origem opcional
     PlanoIntercambio "1" -- "0..*" PreparacaoIdioma : metas
+    User "0..1" -- "0..*" Curso : proprietario de curso pessoal
+    Curso "0..1" -- "0..*" TarefaPlano : curso de apoio

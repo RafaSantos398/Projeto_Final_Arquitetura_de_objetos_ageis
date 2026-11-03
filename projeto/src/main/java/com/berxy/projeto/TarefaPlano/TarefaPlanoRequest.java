@@ -3,6 +3,7 @@ package com.berxy.projeto.TarefaPlano;
 import java.time.LocalDate;
 
 public record TarefaPlanoRequest(Long modeloOrigemId) {
+    public record CursoRequest(Long cursoId) { }
     public record AnotacoesRequest(String texto) { }
     public record StatusRequest(StatusTarefa status) { }
     public record ConteudoRequest(String titulo, String descricao,

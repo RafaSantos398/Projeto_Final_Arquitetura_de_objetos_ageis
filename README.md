@@ -29,7 +29,10 @@ manual, catálogo, API, guia do frontend e diagramas editáveis/SVG.
 - Cadastro e login JWT; permissões USER/ADMIN e isolamento por dono do plano.
 - Perfil, nacionalidades, proficiências, dados da conta e troca de senha.
 - Planos com tipo, status, previsão de início, duração, orçamento e curso opcional.
-- Catálogos de instituições, áreas, cursos e modelos de tarefa.
+- Cursos pessoais criados e editados pelo próprio usuário, com plataforma/instituição livre, link, datas e etiquetas.
+- Etiquetas Financeiro, Linguístico, Acadêmico, Profissional, Cultural e Outros, combináveis.
+- Adição de curso pessoal ao cronograma/checklist de um ou mais planos, sem duplicar a etapa.
+- Catálogos administrativos de instituições, cursos principais, áreas e modelos de tarefa.
 - Associação de modelos aos cursos, ativação/desativação e geração do checklist do curso.
 - Seis temas independentes com 24 sugestões; geração repetida preserva tarefas e progresso.
 - Tarefas próprias, edição, remoção, prazo e movimentação entre três estados.
@@ -81,14 +84,14 @@ email exige novo login. Detalhes e corpos JSON: [API](docs/API.md).
 
 ## Estado da validação
 
-Revisão de 02/11/2026: **72 testes do backend** e **8 do frontend** aprovados no
-build Docker local. Os 72 incluem as validações UTF-8 após simplificação do código.
+Revisão de 03/11/2026: **74 testes do backend** e **8 do frontend** aprovados no
+build Docker local. Os 74 incluem as validações UTF-8 após simplificação do código.
 As versões anteriores passaram por validação PostgreSQL; isso não equivale a afirmar
 que a suíte atual inteira foi reexecutada no PostgreSQL. Os testes atuais usam H2
 isolado; a inicialização de produção verifica a compatibilidade do esquema PostgreSQL.
 
 As migrações de checklists/finanças e anotações já foram aplicadas ao banco existente,
-preservando os dados. A revisão de escopo não exige migração. Veja evidências e
+preservando os dados. A atualização de cursos pessoais exige a migração aditiva `20261103-cursos-pessoais.sql`, aplicada antes do deploy. Veja evidências e
 limites em [Validação e operação](docs/VALIDACAO-E-DEPLOY.md).
 
 ## Escopo acadêmico
@@ -111,3 +114,18 @@ preços/câmbio, anexos ou notificações. `dependeBolsa` é uma indicação de 
 Anotações são texto livre; não atualizam automaticamente o orçamento. Áreas de interesse
 existem no domínio, mas a API atual não expõe sua associação a planos. O Render Free pode
 demorar no primeiro acesso após inatividade. O navegador precisa de conexão à API.
+
+
+## Cursos pessoais e cronograma
+
+O menu Meus cursos permite cadastrar sem depender de um administrador ou de instituição
+no catálogo. Cada cadastro pertence à conta autenticada; listagem, busca e edição não
+expõem cursos pessoais de outra conta, inclusive na consulta de catálogos. Um curso
+pessoal não é classificado automaticamente como curso de idioma ou graduação: o tipo
+de intercâmbio fica null e as etiquetas indicam sua contribuição real.
+
+Adicionar ao cronograma cria uma tarefa do plano com prazo igual ao término previsto.
+Repetir a ação devolve a etapa existente, preservando seu progresso, anotações e prazo.
+Editar datas/descrição do curso não sobrescreve as tarefas já criadas. O usuário pode
+ajustá-las pelo checklist. Curso principal de intercâmbio e cursos de apoio são fluxos
+diferentes; a escolha de curso principal permanece opcional e recolhida dentro do plano.

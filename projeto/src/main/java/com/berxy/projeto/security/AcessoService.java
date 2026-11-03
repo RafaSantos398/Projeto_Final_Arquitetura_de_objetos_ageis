@@ -47,6 +47,9 @@ public class AcessoService {
         String[] partes = caminho.split("/");
         if (caminho.equals("/auth/me") || caminho.equals("/auth/logout")) { return true; }
         if (caminho.equals("/planos-intercambio")) { return true; }
+        if (caminho.equals("/cursos/pessoais") && request.getMethod().equals("POST")) return true;
+        if (partes.length == 4 && partes[1].equals("cursos") && partes[2].equals("pessoais")
+                && request.getMethod().equals("PUT")) return true;
         if (partes.length >= 3 && partes[1].equals("users")) {
             if (partes.length >= 4 && partes[3].equals("activate")) { return false; }
             return partes[2].equals(atual.getId().toString());

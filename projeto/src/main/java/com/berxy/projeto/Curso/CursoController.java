@@ -15,6 +15,17 @@ public class CursoController {
 
     public CursoController(CursoService service) { this.service = service; }
 
+    @PostMapping("/pessoais")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CursoResponse criarPessoal(@RequestBody CursoPessoalRequest dados) {
+        return CursoResponse.de(service.criarPessoal(dados));
+    }
+
+    @PutMapping("/pessoais/{id}")
+    public CursoResponse editarPessoal(@PathVariable Long id, @RequestBody CursoPessoalRequest dados) {
+        return CursoResponse.de(service.atualizarPessoal(id, dados));
+    }
+
     // GET /cursos ou GET /cursos?instituicaoId=1
     @GetMapping
     public List<CursoResponse> list(@RequestParam(required = false) Long instituicaoId) {

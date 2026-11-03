@@ -110,3 +110,11 @@ os campos. Para banco vazio, o schema-postgresql.sql atual já contém esses cam
 A revisão de escopo de 02/11/2026 altera somente código e documentação, sem migração.
 72 testes atuais passaram em H2; os resultados PostgreSQL acima são históricos,
 não uma afirmação de que a suíte atual inteira rodou nesse banco.
+
+
+## Cursos pessoais
+
+A migração migrations/20261103-cursos-pessoais.sql inclui proprietário, etiquetas,
+datas/link e origem de apoio nas tarefas. Curso de catálogo continua exigindo instituição
+na regra de domínio; curso pessoal aceita instituição livre e não tem tipo de intercâmbio.
+Para banco novo, o schema-postgresql.sql atualizado já inclui essas colunas e FKs.

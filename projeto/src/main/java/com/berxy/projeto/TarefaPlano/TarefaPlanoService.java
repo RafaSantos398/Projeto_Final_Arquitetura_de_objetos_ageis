@@ -30,6 +30,16 @@ public class TarefaPlanoService {
     @Autowired
     private CursoService cursoService;
 
+    @Transactional
+    public TarefaPlano agendarCurso(Long planoId, Long cursoId) {
+        PlanoIntercambio plano = planoIntercambioService.GetByid(planoId);
+        if (cursoId == null) throw new IllegalArgumentException("Selecione um curso.");
+        var curso = cursoService.buscar(cursoId);
+        var existente = tarefaPlanoRepository.findByPlanoIdAndCursoApoioId(planoId, cursoId);
+        if (existente.isPresent()) return existente.get();
+        return tarefaPlanoRepository.save(TarefaPlano.deCurso(plano, curso));
+    }
+
     public List<TarefaPlano> list(Long planoId) {
         planoIntercambioService.GetByid(planoId);
         return tarefaPlanoRepository.findByPlanoIdOrderByIdAsc(planoId);

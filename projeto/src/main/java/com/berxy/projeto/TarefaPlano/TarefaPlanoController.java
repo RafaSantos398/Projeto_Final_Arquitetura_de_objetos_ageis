@@ -14,6 +14,12 @@ public class TarefaPlanoController {
     @Autowired
     private TarefaPlanoService tarefaPlanoService;
 
+    @PostMapping("/curso")
+    public TarefaPlanoResponse agendarCurso(@PathVariable("idPlano") Long planoId,
+            @RequestBody TarefaPlanoRequest.CursoRequest dados) {
+        return TarefaPlanoResponse.de(tarefaPlanoService.agendarCurso(planoId, dados.cursoId()));
+    }
+
     @GetMapping("/{idTarefa}/anotacoes")
     public AnotacoesTarefaResponse anotacoes(@PathVariable("idPlano") Long idPlano,
             @PathVariable("idTarefa") Long idTarefa) {

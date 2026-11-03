@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface TarefaPlanoRepository extends JpaRepository<TarefaPlano, Long> {
+    Optional<TarefaPlano> findByPlanoIdAndCursoApoioId(Long planoId, Long cursoId);
     boolean existsByPlanoIdAndChaveSugestao(Long planoId, String chaveSugestao);
     List<TarefaPlano> findByPlanoIdOrderByIdAsc(Long planoId);
 

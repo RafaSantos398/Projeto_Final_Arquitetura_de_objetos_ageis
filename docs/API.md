@@ -37,6 +37,8 @@ DELETE de usuário é desativação lógica, DELETE de tarefa é remoção defin
 
 | Método | Caminho | Operação Java |
 |---|---|---|
+| POST | `/cursos/pessoais` | `criarPessoal` |
+| PUT | `/cursos/pessoais/{id}` | `editarPessoal` |
 | GET | `/cursos` | `list` |
 | GET | `/cursos/{id}` | `buscar` |
 | POST | `/cursos` | `salvar` |
@@ -102,6 +104,7 @@ DELETE de usuário é desativação lógica, DELETE de tarefa é remoção defin
 
 | Método | Caminho | Operação Java |
 |---|---|---|
+| POST | `/planos-intercambio/{idPlano}/tarefas/curso` | `agendarCurso` |
 | GET | `/planos-intercambio/{idPlano}/tarefas/{idTarefa}/anotacoes` | `anotacoes` |
 | PUT | `/planos-intercambio/{idPlano}/tarefas/{idTarefa}/anotacoes` | `salvarAnotacoes` |
 | PATCH | `/planos-intercambio/{idPlano}/tarefas/{idTarefa}/status` | `mover` |
@@ -278,7 +281,12 @@ public record CursoResponse(
         TipoIntercambio tipoIntercambio,
         String idioma,
         Integer duracaoMeses,
-        boolean ativo
+        boolean ativo,
+        boolean pessoal,
+        java.util.List<EtiquetaCurso> etiquetas,
+        java.time.LocalDate inicioPrevisto,
+        java.time.LocalDate fimPrevisto,
+        String link
 )
 ```
 
@@ -414,6 +422,8 @@ public record AnotacoesTarefaResponse(Long tarefaId, String texto, Instant atual
 ```java
 public record TarefaPlanoRequest(Long modeloOrigemId)
 
+public record CursoRequest(Long cursoId)
+
 public record AnotacoesRequest(String texto)
 
 public record StatusRequest(StatusTarefa status)
@@ -440,7 +450,9 @@ public record TarefaPlanoResponse(
         Instant concluidaEm,
         com.berxy.projeto.ModeloTarefa.CategoriaTarefa categoria,
         TemaChecklist tema,
-        boolean personalizada
+        boolean personalizada,
+        Long cursoApoioId,
+        String cursoApoioNome
 )
 ```
 
@@ -509,3 +521,35 @@ Handlers locais existentes podem retornar `{ "mensagem": "..." }` ou texto.
 Erros do filtro de segurança podem usar o corpo padrão do Spring. O cliente HTTP
 aceita esses formatos e 204 sem corpo. Não depender de campos RFC como type/instance:
 a aplicação usa DTO simples após a revisão de escopo.
+
+
+## Cursos pessoais
+
+POST /cursos/pessoais cria para o dono do token; PUT /cursos/pessoais/{id} edita somente
+o próprio cadastro. GET /cursos lista catálogo e pessoais da conta; GET /cursos/{id}
+busca com a mesma verificação. Cursos pessoais não exigem instituição previamente cadastrada.
+
+```json
+{"nome":"Inglês para entrevistas","descricao":"Praticar entrevistas","instituicaoNome":"Minha plataforma","idioma":"en","inicioPrevisto":"2027-01-10","fimPrevisto":"2027-03-10","link":"https://example.com/curso","etiquetas":["LINGUISTICO","PROFISSIONAL"]}
+```
+
+Nome e idioma são obrigatórios; selecionar ao menos uma etiqueta. Datas, instituição,
+descrição e link são opcionais. Etiquetas válidas: FINANCEIRO, LINGUISTICO, ACADEMICO,
+PROFISSIONAL, CULTURAL, OUTROS. Repetições são normalizadas. Datas usam ISO; término
+não pode anteceder início. O proprietário nunca é recebido do cliente.
+
+Resposta usa CursoResponse com pessoal=true, instituicaoId=null, tipoIntercambio=null,
+etiquetas como array e datas/link. O catálogo continua com pessoal=false. Não enviar
+esse curso como curso principal pelo PATCH /planos-intercambio/{id}/curso.
+
+Adicionar ao cronograma: POST /planos-intercambio/{idPlano}/tarefas/curso com
+`{ "cursoId": 1 }`. Retorna TarefaPlanoResponse e 200, inclusive quando já existe.
+A resposta informa cursoApoioId e cursoApoioNome. O término vira prazo inicial;
+edições posteriores do curso não sobrescrevem a tarefa. Plano e curso precisam
+pertencer ao mesmo usuário. Não é necessário escolher curso principal no plano.
+
+```java
+public record CursoPessoalRequest(String nome, String descricao, String instituicaoNome,
+        String idioma, LocalDate inicioPrevisto, LocalDate fimPrevisto, String link,
+        List<EtiquetaCurso> etiquetas) { }
+```
