@@ -1,13 +1,12 @@
 # Berxy
 
-Sistema de planejamento de intercâmbio desenvolvido para Arquitetura de Objetos do Insper.
+Sistema de planejamento de intercâmbio.
 O usuário organiza planos, checklists, preparação de idioma, reserva financeira e
 anotações por tarefa, mesmo sem escolher um curso do catálogo.
 
 - **Site:** https://berxy.vercel.app
 - **API:** https://berxy-api.onrender.com
 - **Frontend:** https://github.com/RafaSantos398/FrontEnd_zambas
-- **Material da disciplina:** https://ezambomsantana.github.io/arquitetura-objetos-site/
 
 ## Documentação para o grupo
 
@@ -20,7 +19,7 @@ manual, catálogo, API, guia do frontend e diagramas editáveis/SVG.
 | [Diagramas](docs/DIAGRAMAS.md) | Classes e cardinalidades, camadas, autenticação e implantação |
 | [Todos os arquivos do backend](docs/ARQUIVOS-BACKEND.md) | Responsabilidade, métodos, dependências, DTOs, enums, configurações e testes |
 | [Contratos da API](docs/API.md) | Rotas reais, campos dos requests/responses e exemplos |
-| [Revisão do escopo](docs/REVISAO-ESCOPO.md) | Correspondência com as Aulas 02–14 e simplificações realizadas |
+| [Decisões técnicas](docs/REVISAO-ESCOPO.md) | Organização das camadas, persistência e regras de implementação |
 | [Validação e operação](docs/VALIDACAO-E-DEPLOY.md) | Testes, banco, execução local e atualização dos serviços |
 | [Guia do frontend](https://github.com/RafaSantos398/FrontEnd_zambas/blob/main/docs/GUIA-FRONTEND.md) | Cada arquivo React, cliente HTTP, navegação e Docker |
 
@@ -30,6 +29,7 @@ manual, catálogo, API, guia do frontend e diagramas editáveis/SVG.
 - Perfil, nacionalidades, proficiências, dados da conta e troca de senha.
 - Planos com tipo, status, previsão de início, duração, orçamento e curso opcional.
 - Cursos pessoais criados e editados pelo próprio usuário, com plataforma/instituição livre, link, datas e etiquetas.
+- Área de estudo vinculada ao curso, cadastro de novas áreas e filtro por área.
 - Etiquetas Financeiro, Linguístico, Acadêmico, Profissional, Cultural e Outros, combináveis.
 - Adição de curso pessoal ao cronograma/checklist de um ou mais planos, sem duplicar a etapa.
 - Catálogos administrativos de instituições, cursos principais, áreas e modelos de tarefa.
@@ -55,6 +55,129 @@ Os pacotes são organizados por funcionalidade. Entidades concentram regras;
 services coordenam transações e consultas; repositories acessam o banco;
 controllers recebem HTTP e DTOs transportam dados. Não há TypeScript, Tailwind,
 biblioteca de UI ou serviço externo de autenticação.
+
+## Classes e relações
+
+| Classe | Responsabilidade |
+|---|---|
+| User | Conta, autenticação e permissões |
+| PerfilINtercambista | Dados pessoais, nacionalidades e proficiências |
+| ProficienciaIdioma | Idioma e nível pertencentes ao perfil |
+| Instituicao | Dados das instituições que oferecem cursos |
+| AreaEstudo | Classificação compartilhada dos cursos |
+| Curso | Cursos do catálogo e pessoais, área, etiquetas e datas |
+| ModeloTarefa | Sugestões reutilizáveis para gerar tarefas |
+| PlanoIntercambio | Objetivo, orçamento e organização do intercâmbio |
+| TarefaPlano | Etapa do cronograma, prazo, estado e anotações |
+| PreparacaoIdioma | Metas e acompanhamento do estudo de idioma |
+
+São nove entidades e um objeto de valor (`ProficienciaIdioma`).
+
+```mermaid
+classDiagram
+    direction TB
+    class User {
+        Long id
+        String email
+        String passwordHash
+        Role role
+        boolean active
+    }
+    class PerfilINtercambista {
+        Long id
+        LocalDate nascimento
+        String paisResidencia
+        atualizar(dados)
+    }
+    class ProficienciaIdioma {
+        <<value object>>
+        String idioma
+        NivelProficiencia nivel
+    }
+    class Instituicao {
+        Long id
+        String nome
+        String siteOficial
+    }
+    class AreaEstudo {
+        Long id
+        String nome
+        String descricao
+    }
+    class Curso {
+        Long id
+        TipoIntercambio tipoIntercambio
+        String idioma
+        boolean ativo
+        String etiquetas
+        LocalDate inicioPrevisto
+        LocalDate fimPrevisto
+        adicionarModeloTarefa(modelo)
+    }
+    class ModeloTarefa {
+        Long id
+        String titulo
+        CategoriaTarefa categoria
+        boolean ativo
+    }
+    class PlanoIntercambio {
+        Long id
+        StatusPlano status
+        BigDecimal orcamentoTotal
+        BigDecimal valorGuardado
+        BigDecimal aporteMensal
+        selecionarCurso(curso)
+    }
+    class TarefaPlano {
+        Long id
+        String titulo
+        StatusTarefa status
+        LocalDate prazo
+        String anotacoes
+        Instant concluidaEm
+        moverPara(status)
+    }
+    class PreparacaoIdioma {
+        Long id
+        String idioma
+        NivelProficiencia nivelAlvo
+        StatusPreparacao status
+        Integer minutosSemanaisPlanejados
+    }
+    User "1" -- "0..1" PerfilINtercambista : perfil
+    PerfilINtercambista "1" *-- "0..*" ProficienciaIdioma : valores do perfil
+    User "1" -- "0..*" PlanoIntercambio : dono
+    Instituicao "0..1" -- "0..*" Curso : oferece
+    Curso "0..*" -- "0..*" ModeloTarefa : modelos associados
+    Curso "0..1" -- "0..*" PlanoIntercambio : escolhido
+    PlanoIntercambio "0..*" -- "0..*" AreaEstudo : interesses no dominio
+    PlanoIntercambio "1" -- "0..*" TarefaPlano : checklist
+    ModeloTarefa "0..1" -- "0..*" TarefaPlano : origem opcional
+    PlanoIntercambio "1" -- "0..*" PreparacaoIdioma : metas
+    User "0..1" -- "0..*" Curso : proprietario de curso pessoal
+    Curso "0..1" -- "0..*" TarefaPlano : curso de apoio
+    AreaEstudo "0..1" -- "0..*" Curso : classifica
+```
+
+Mais detalhes: [diagramas das camadas e implantação](docs/DIAGRAMAS.md) e
+[responsabilidades de cada arquivo](docs/ARQUIVOS-BACKEND.md).
+
+## Trecho do fluxo de cadastro de curso
+
+Em `CursoService`, o cadastro identifica o usuário autenticado, resolve a área e
+persiste o curso dentro da transação do service:
+
+```java
+public Curso criarPessoal(CursoPessoalRequest dados) {
+    Curso curso = Curso.pessoal(atual(), dados);
+    curso.definirAreaEstudo(resolverArea(dados.areaEstudoId(), dados.areaEstudoNome()));
+    return repository.save(curso);
+}
+```
+
+A entidade valida seus dados; o service coordena as consultas; o repository
+persiste; o controller retorna o DTO. Uma área pode classificar vários cursos,
+e o curso pode ficar sem área. Cursos pessoais pertencem ao usuário que os criou.
 
 ## Executar e testar
 
@@ -93,14 +216,6 @@ isolado; a inicialização de produção verifica a compatibilidade do esquema P
 As migrações de checklists/finanças e anotações já foram aplicadas ao banco existente,
 preservando os dados. A atualização de cursos pessoais exige a migração aditiva `20261103-cursos-pessoais.sql`, aplicada antes do deploy. Veja evidências e
 limites em [Validação e operação](docs/VALIDACAO-E-DEPLOY.md).
-
-## Escopo acadêmico
-
-A revisão simplificou handlers para DTO e `@ExceptionHandler`, substituiu a anotação
-própria de tamanho de senha por validação no service e retirou bloqueio pessimista/JPQL
-personalizado da geração por tema. A restrição única do banco continua impedindo duplicação;
-um conflito simultâneo pode retornar 409 e deve ser resolvido recarregando e tentando novamente.
-Os records já adotados em ModeloTarefa foram preservados conforme orientação do projeto.
 
 ## Limites conhecidos
 

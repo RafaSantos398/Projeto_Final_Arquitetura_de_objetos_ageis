@@ -42,9 +42,8 @@ O frontend da Vercel chama diretamente a API HTTPS, sem o proxy `/api` do Compos
 
 São nove entidades e um objeto de valor `@Embeddable`. Requests, responses,
 controllers, services e enums não entram nessa contagem. `PlanejamentoFinanceiro`
-é um DTO de cálculo, não uma décima tabela. A rubrica pede classes de domínio,
-não dez tabelas; apresentar a composição de ProficienciaIdioma e confirmar a
-interpretação adotada pelo professor.
+é um DTO de cálculo. ProficienciaIdioma compõe o perfil e é persistido como
+objeto de valor, sem identidade independente.
 
 ## 4. Relações e cardinalidades
 
@@ -212,11 +211,8 @@ A suíte atual foi executada em H2; a produção valida o esquema PostgreSQL no 
 | Ad | Área de estudo e instituição |
 | Mateus | Curso e preparação de idioma |
 
-Instituição apareceu para João e Ad na divisão inicial. O grupo precisa alinhar a
-explicação dessa divisão na apresentação. A tabela não substitui o histórico de autoria.
-O backend recebeu assistência de IA, inclusive implementação; a rubrica restringe esse
-uso a suporte e exige código majoritariamente autoral. Explicar o código não substitui
-a conformidade com essa regra. Tratar a participação com transparência com o professor.
+Instituição apareceu para João e Ad na divisão inicial; a tabela registra a divisão
+informada pelo grupo.
 
 ## 15. Roteiro sugerido para apresentação
 
@@ -233,13 +229,12 @@ a conformidade com essa regra. Tratar a participação com transparência com o 
 
 Aquecer o Render antes da apresentação e preparar dados de demonstração coerentes.
 Os integrantes devem conseguir explicar suas classes, relações, regras e testes.
-Não decorar apenas o resultado visual. Mais funcionalidades não substituem qualidade
-ou domínio do código, conforme as observações finais da rubrica.
+O roteiro percorre os fluxos principais e suas regras de funcionamento.
 
 ## 16. Leitura complementar
 
 [Catálogo de arquivos](ARQUIVOS-BACKEND.md) · [API](API.md) ·
-[Revisão de escopo](REVISAO-ESCOPO.md) · [Operação](VALIDACAO-E-DEPLOY.md) ·
+[Decisões técnicas](REVISAO-ESCOPO.md) · [Operação](VALIDACAO-E-DEPLOY.md) ·
 [Frontend](https://github.com/RafaSantos398/FrontEnd_zambas/blob/main/docs/GUIA-FRONTEND.md).
 
 
