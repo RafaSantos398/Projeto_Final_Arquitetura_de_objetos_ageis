@@ -7,6 +7,7 @@
     );
 
     create table curso (
+        area_estudo_id bigint,
         ativo boolean not null,
         duracao_meses integer,
         idioma varchar(5) not null,
@@ -202,3 +203,5 @@
 
     alter table curso add constraint fk_curso_proprietario foreign key (proprietario_id) references users;
     alter table tarefa_plano add constraint fk_tarefa_curso_apoio foreign key (curso_apoio_id) references curso;
+
+    alter table curso add constraint fk_curso_area_estudo foreign key (area_estudo_id) references area_estudo;

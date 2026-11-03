@@ -91,6 +91,7 @@ classDiagram
     PlanoIntercambio "1" -- "0..*" PreparacaoIdioma : metas
     User "0..1" -- "0..*" Curso : proprietario de curso pessoal
     Curso "0..1" -- "0..*" TarefaPlano : curso de apoio
+    AreaEstudo "0..1" -- "0..*" Curso : classifica
 ```
 
 A multiplicidade junto à classe indica quantas instâncias dela podem se relacionar
@@ -170,3 +171,5 @@ usado nas verificações, que não grava no banco publicado. A Vercel não execu
 Nginx do Compose e não usa o prefixo `/api` na URL pública do backend.
 
 Curso do catálogo exige instituição pela regra de cadastro; curso pessoal tem dono, instituição livre e etiquetas. Tarefa pode ter curso de apoio.
+
+AreaEstudo classifica cursos por FK opcional; a relação Plano–AreaEstudo existente no domínio é independente.

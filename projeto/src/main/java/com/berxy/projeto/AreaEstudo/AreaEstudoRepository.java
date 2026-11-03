@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AreaEstudoRepository extends JpaRepository<AreaEstudo, Long> {
+    java.util.Optional<AreaEstudo> findFirstByNomeIgnoreCaseOrderByIdAsc(String nome);
 }

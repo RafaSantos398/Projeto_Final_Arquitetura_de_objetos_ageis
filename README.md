@@ -84,8 +84,8 @@ email exige novo login. Detalhes e corpos JSON: [API](docs/API.md).
 
 ## Estado da validação
 
-Revisão de 03/11/2026: **74 testes do backend** e **8 do frontend** aprovados no
-build Docker local. Os 74 incluem as validações UTF-8 após simplificação do código.
+Revisão de 03/11/2026: **76 testes do backend** e **8 do frontend** aprovados no
+build Docker local. Os 76 incluem as validações UTF-8 após simplificação do código.
 As versões anteriores passaram por validação PostgreSQL; isso não equivale a afirmar
 que a suíte atual inteira foi reexecutada no PostgreSQL. Os testes atuais usam H2
 isolado; a inicialização de produção verifica a compatibilidade do esquema PostgreSQL.
@@ -129,3 +129,23 @@ Repetir a ação devolve a etapa existente, preservando seu progresso, anotaçõ
 Editar datas/descrição do curso não sobrescreve as tarefas já criadas. O usuário pode
 ajustá-las pelo checklist. Curso principal de intercâmbio e cursos de apoio são fluxos
 diferentes; a escolha de curso principal permanece opcional e recolhida dentro do plano.
+
+
+## Área de estudo do curso e classes de domínio
+
+Curso possui uma referência ManyToOne para AreaEstudo, persistida em curso.area_estudo_id.
+O usuário pode escolher uma área existente ou informar uma nova no próprio cadastro;
+nomes já existentes são reutilizados sem diferenciar maiúsculas/minúsculas. Área é
+uma classificação compartilhada; os cursos pessoais continuam privados. Área e
+etiquetas são campos distintos. Também é possível filtrar os cursos pela área.
+Cursos anteriores podem permanecer sem área e ser classificados depois.
+
+As dez classes de domínio efetivamente usadas são User, PerfilINtercambista,
+ProficienciaIdioma, Instituicao, AreaEstudo, Curso, ModeloTarefa, PlanoIntercambio,
+TarefaPlano e PreparacaoIdioma. São nove entidades e um objeto de valor Embeddable:
+ProficienciaIdioma é instanciado, validado, persistido e retornado no perfil. DTOs,
+enums, controllers e repositories não entram nessa contagem.
+
+Atualização da relação com área: migração 20261103-area-do-curso.sql, aditiva, antes
+do deploy. Os 76 testes atuais incluem associação real, renomeação, remoção do vínculo,
+ID inexistente, cadastro de área e reaproveitamento de nomes. Não há entidade nova.

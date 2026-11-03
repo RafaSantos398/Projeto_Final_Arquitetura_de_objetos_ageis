@@ -118,3 +118,5 @@ A migração migrations/20261103-cursos-pessoais.sql inclui proprietário, etiqu
 datas/link e origem de apoio nas tarefas. Curso de catálogo continua exigindo instituição
 na regra de domínio; curso pessoal aceita instituição livre e não tem tipo de intercâmbio.
 Para banco novo, o schema-postgresql.sql atualizado já inclui essas colunas e FKs.
+
+Área no curso: aplicar migrations/20261103-area-do-curso.sql depois de cursos pessoais; FK opcional preserva registros anteriores. Banco novo já usa schema completo atualizado.

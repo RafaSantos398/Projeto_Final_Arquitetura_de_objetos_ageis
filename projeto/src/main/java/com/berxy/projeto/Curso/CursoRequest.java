@@ -8,6 +8,8 @@ public record CursoRequest(
         String descricao,
         TipoIntercambio tipoIntercambio,
         String idioma,
-        Integer duracaoMeses
+        Integer duracaoMeses,
+        Long areaEstudoId,
+        String areaEstudoNome
 ) {
 }

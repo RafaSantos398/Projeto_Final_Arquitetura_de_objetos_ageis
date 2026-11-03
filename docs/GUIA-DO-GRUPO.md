@@ -33,7 +33,7 @@ O frontend da Vercel chama diretamente a API HTTPS, sem o proxy `/api` do Compos
 | PerfilINtercambista | Dados pessoais do intercambista, nacionalidades, residência e escolaridade |
 | ProficienciaIdioma | Objeto de valor com idioma e nível, pertencente ao perfil |
 | Instituicao | Instituição que oferece cursos; nome, descrição e site oficial |
-| AreaEstudo | Área do catálogo, com nome e descrição |
+| AreaEstudo | Classifica cursos por relação real; nome e descrição compartilhados |
 | Curso | Pertence a instituição; tipo, idioma, duração, ativo e modelos associados |
 | ModeloTarefa | Modelo reutilizável de tarefa do curso, com categoria e ativação |
 | PlanoIntercambio | Objetivo de um usuário; organiza curso opcional, orçamento, tarefas e idioma |
@@ -57,6 +57,7 @@ interpretação adotada pelo professor.
 | Instituicao 0..1 → 0..* Curso | Obrigatória no catálogo; opcional no curso pessoal | ManyToOne em Curso |
 | Curso * ↔ * ModeloTarefa | Um modelo pode ser reutilizado em cursos | ManyToMany; curso_modelo_tarefa |
 | Plano 0..1 → Curso | Planejamento pode começar sem escolher curso | ManyToOne opcional em Plano |
+| AreaEstudo 0..1 → 0..* Curso | Uma área pode classificar vários cursos | ManyToOne em Curso; cursos antigos podem não ter área |
 | Plano * ↔ * AreaEstudo | Estrutura de interesses existente no domínio | ManyToMany; sem rota de associação na API atual |
 | Plano 1 → 0..* Tarefa | Checklist pessoal de cada plano | OneToMany/ManyToOne; tarefa.plano é dono da FK |
 | Tarefa 0..1 → ModeloTarefa | Tarefa de curso preserva referência ao modelo | ManyToOne opcional |
@@ -275,3 +276,24 @@ permite adicioná-la de novo depois. A ação não matricula, compra nem paga um
 Relações adicionais: User 0..1 → 0..* Curso (dono opcional para distinguir catálogo) e
 Curso 0..1 → 0..* TarefaPlano (origem de apoio opcional). Não foi criada entidade nova.
 A migração 20261103-cursos-pessoais.sql preserva dados existentes e é exigida no Render.
+
+
+## 18. Área de estudo e uso efetivo das dez classes
+
+Curso referencia AreaEstudo por chave estrangeira. Não se trata de enum ou cópia do
+nome: consultas seguintes do curso refletem renomeações feitas na área. A relação é
+unidirecional; a listagem compartilhada de áreas não devolve cursos pessoais de outros
+usuários. Etiquetas dizem a contribuição do curso; a área classifica seu conteúdo.
+
+CursoService resolve areaEstudoId existente ou valida/reutiliza/cria areaEstudoNome.
+Não aceita os dois ao mesmo tempo. Ao editar, null em ambos remove o vínculo sem apagar
+a área. Criar uma área acontece na mesma transação do curso. As áreas continuam podendo
+ser mantidas pela administração; o cadastro do curso permite acrescentar uma classificação.
+Não há promessa de unicidade de nomes em requisições simultâneas: o catálogo existente
+não possui essa restrição e o reaproveitamento por nome ocorre na consulta do service.
+
+São nove entidades (User, PerfilINtercambista, Instituicao, AreaEstudo, Curso,
+ModeloTarefa, PlanoIntercambio, TarefaPlano e PreparacaoIdioma) e o objeto de valor
+ProficienciaIdioma. Este último é criado no método atualizar do perfil e salvo na
+coleção JPA, depois convertido para a resposta da API. Todos correspondem a funcionalidades
+implementadas; não se contam enums, DTOs ou classes de infraestrutura para atingir dez.

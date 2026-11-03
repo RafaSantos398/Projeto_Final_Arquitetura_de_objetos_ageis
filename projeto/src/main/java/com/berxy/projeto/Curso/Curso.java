@@ -23,6 +23,13 @@ public class Curso {
     @JoinColumn(name = "instituicao_id")
     private Instituicao instituicao;
 
+    @ManyToOne
+    @JoinColumn(name = "area_estudo_id")
+    private com.berxy.projeto.AreaEstudo.AreaEstudo areaEstudo;
+
+    public com.berxy.projeto.AreaEstudo.AreaEstudo getAreaEstudo() { return areaEstudo; }
+    public void definirAreaEstudo(com.berxy.projeto.AreaEstudo.AreaEstudo area) { this.areaEstudo = area; }
+
     @Column(nullable = false, length = 100)
     private String nome;
 

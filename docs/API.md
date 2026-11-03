@@ -265,7 +265,9 @@ public record CursoRequest(
         String descricao,
         TipoIntercambio tipoIntercambio,
         String idioma,
-        Integer duracaoMeses
+        Integer duracaoMeses,
+        Long areaEstudoId,
+        String areaEstudoNome
 )
 ```
 
@@ -286,7 +288,9 @@ public record CursoResponse(
         java.util.List<EtiquetaCurso> etiquetas,
         java.time.LocalDate inicioPrevisto,
         java.time.LocalDate fimPrevisto,
-        String link
+        String link,
+        Long areaEstudoId,
+        String areaEstudoNome
 )
 ```
 
@@ -551,5 +555,23 @@ pertencer ao mesmo usuário. Não é necessário escolher curso principal no pla
 ```java
 public record CursoPessoalRequest(String nome, String descricao, String instituicaoNome,
         String idioma, LocalDate inicioPrevisto, LocalDate fimPrevisto, String link,
-        List<EtiquetaCurso> etiquetas) { }
+        List<EtiquetaCurso> etiquetas, Long areaEstudoId, String areaEstudoNome) { }
 ```
+
+
+## Área de estudo nos cursos
+
+POST/PUT de curso, tanto pessoal quanto catálogo, aceitam areaEstudoId ou
+areaEstudoNome. Ambos são opcionais para manter cursos existentes compatíveis;
+se ambos vierem preenchidos, retorna 400. ID inexistente retorna 404. Informar nome
+reutiliza uma área com o mesmo nome, ignorando caixa, ou cria AreaEstudo dentro da
+transação. O nome obedece ao limite de 100 caracteres da entidade existente.
+
+```json
+{"nome":"Finanças para intercâmbio","idioma":"pt-BR","etiquetas":["FINANCEIRO"],"areaEstudoNome":"Economia"}
+```
+
+Para escolher uma já cadastrada, enviar areaEstudoId e omitir areaEstudoNome.
+GET /area-estudo lista as opções. CursoResponse acrescenta areaEstudoId e
+areaEstudoNome. Null em ambos no PUT remove a classificação, sem excluir a área.
+A área é compartilhada e não expõe o curso pessoal na listagem de outros usuários.

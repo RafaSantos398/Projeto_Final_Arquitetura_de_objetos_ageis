@@ -16,14 +16,18 @@ public record CursoResponse(
         java.util.List<EtiquetaCurso> etiquetas,
         java.time.LocalDate inicioPrevisto,
         java.time.LocalDate fimPrevisto,
-        String link
+        String link,
+        Long areaEstudoId,
+        String areaEstudoNome
 ) {
     public static CursoResponse de(Curso curso) {
         return new CursoResponse(
                 curso.getId(), curso.getInstituicao() == null ? null : curso.getInstituicao().getId(), curso.getInstituicaoNome(),
                 curso.getNome(), curso.getDescricao(), curso.getTipoIntercambio(),
                 curso.getIdioma(), curso.getDuracaoMeses(), curso.isAtivo(), curso.isPessoal(),
-                curso.getEtiquetas(), curso.getInicioPrevisto(), curso.getFimPrevisto(), curso.getLink()
+                curso.getEtiquetas(), curso.getInicioPrevisto(), curso.getFimPrevisto(), curso.getLink(),
+                curso.getAreaEstudo() == null ? null : curso.getAreaEstudo().getId(),
+                curso.getAreaEstudo() == null ? null : curso.getAreaEstudo().getNome()
         );
     }
 }

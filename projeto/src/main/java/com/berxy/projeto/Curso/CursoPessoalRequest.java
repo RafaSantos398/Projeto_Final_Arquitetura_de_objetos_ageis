@@ -5,4 +5,4 @@ import java.util.List;
 
 public record CursoPessoalRequest(String nome, String descricao, String instituicaoNome,
         String idioma, LocalDate inicioPrevisto, LocalDate fimPrevisto, String link,
-        List<EtiquetaCurso> etiquetas) { }
+        List<EtiquetaCurso> etiquetas, Long areaEstudoId, String areaEstudoNome) { }

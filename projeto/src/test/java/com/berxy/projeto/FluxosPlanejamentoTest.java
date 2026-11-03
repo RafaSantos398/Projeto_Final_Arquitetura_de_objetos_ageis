@@ -74,12 +74,58 @@ class FluxosPlanejamentoTest {
         tarefas.deleteAll();
         preparacoes.deleteAll();
         planos.deleteAll();
-        areas.deleteAll();
         cursos.deleteAll();
+        areas.deleteAll();
         modelos.deleteAll();
         instituicoes.deleteAll();
         perfis.deleteAll();
         usuarios.deleteAll();
+    }
+
+    @Test
+    void cursoReferenciaAreaRealEPermiteTrocarOuRemover() throws Exception {
+        Cenario c = cenario(false);
+        String token = context.getBean(com.berxy.projeto.security.JwtService.class)
+                .generateToken(usuarios.findById(c.usuarioId()).orElseThrow().getEmail());
+        AreaEstudo area = areas.save(new AreaEstudo("Economia", null));
+        String corpo = "{\"nome\":\"Meu curso\",\"idioma\":\"pt-BR\",\"etiquetas\":[\"FINANCEIRO\"],\"areaEstudoId\":" + area.getId() + "}";
+        mvc.perform(post("/cursos/pessoais").header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.areaEstudoId").value(area.getId()))
+                .andExpect(jsonPath("$.areaEstudoNome").value("Economia"));
+        Long id = cursos.findAll().stream().filter(Curso::isPessoal).findFirst().orElseThrow().getId();
+        assertEquals(area.getId(), cursos.findById(id).orElseThrow().getAreaEstudo().getId());
+        area.atualizarArea("Economia e gestão", null); areas.saveAndFlush(area);
+        mvc.perform(get("/cursos/{id}", id).header("Authorization", "Bearer " + token))
+                .andExpect(jsonPath("$.areaEstudoNome").value("Economia e gestão"));
+        mvc.perform(put("/cursos/pessoais/{id}", id).header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                .content(corpo.replace("\"areaEstudoId\":" + area.getId(), "\"areaEstudoId\":9223372036854775807")))
+                .andExpect(status().isNotFound());
+        assertEquals(area.getId(), cursos.findById(id).orElseThrow().getAreaEstudo().getId());
+        mvc.perform(put("/cursos/pessoais/{id}", id).header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                .content(corpo.replace(",\"areaEstudoId\":" + area.getId(), "")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.areaEstudoId").isEmpty());
+    }
+
+    @Test
+    void novaAreaNoCadastroReutilizaNomeEValidaSemCriarOrfaos() throws Exception {
+        Cenario c = cenario(false);
+        String token = context.getBean(com.berxy.projeto.security.JwtService.class)
+                .generateToken(usuarios.findById(c.usuarioId()).orElseThrow().getEmail());
+        String corpo = "{\"nome\":\"Meu curso\",\"idioma\":\"en\",\"etiquetas\":[\"LINGUISTICO\"],\"areaEstudoNome\":\" Letras \"}";
+        mvc.perform(post("/cursos/pessoais").header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.areaEstudoNome").value("Letras"));
+        mvc.perform(post("/cursos/pessoais").header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                .content(corpo.replace(" Letras ", "letras"))).andExpect(status().isCreated());
+        assertEquals(1, areas.count());
+        for (String invalido : java.util.List.of(corpo.replace(" Letras ", "x".repeat(101)),
+                corpo.replace("{", "{\"areaEstudoId\":1,"), corpo.replace("Meu curso", ""))) {
+            mvc.perform(post("/cursos/pessoais").header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(invalido))
+                    .andExpect(status().isBadRequest());
+        }
+        assertEquals(1, areas.count());
+        assertEquals(3, cursos.count()); // Um curso do cenário e dois pessoais válidos.
+        mvc.perform(get("/area-estudo").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].nome").value("Letras"));
     }
 
     @Test

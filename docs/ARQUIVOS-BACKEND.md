@@ -864,3 +864,13 @@ A implementação agora tem 86 arquivos Java de produção. Complementos aos arq
 
 FluxosPlanejamentoTest inclui isolamento entre donos, etiquetas, datas/links inválidos,
 agendamento repetido e preservação de prazo/progresso após edição do curso.
+
+
+## Relação Curso e AreaEstudo
+
+Curso.java inclui areaEstudo (ManyToOne), getter e definirAreaEstudo; não cria entidade
+adicional. CursoRequest/CursoPessoalRequest recebem areaEstudoId ou nome; CursoResponse
+retorna ID/nome. CursoService coordena a busca/criação e AreaEstudo valida seu próprio
+nome. AreaEstudoRepository acrescenta findFirstByNomeIgnoreCaseOrderByIdAsc. A migração
+projeto/database/migrations/20261103-area-do-curso.sql adiciona somente a FK opcional.
+Os testes de planejamento verificam persistência, renomeação, validação e remoção do vínculo.

@@ -112,3 +112,5 @@ campos de data e texto e operações usuais de repository. Etiquetas são conver
 pela entidade para uma coluna textual, sem introduzir coleção JPA ou biblioteca.
 React usa formulários e checkboxes nativos. Não foram adicionadas dependências.
 A migração é necessária para manter persistência e distingue catálogo de curso pessoal.
+
+A relação Curso–AreaEstudo usa ManyToOne e repository já presentes no material; não acrescenta entidade nem dependência. A contagem permanece nove entidades e um objeto de valor em uso.

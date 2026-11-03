@@ -109,3 +109,13 @@ A migração de cursos pessoais foi aplicada ao PostgreSQL publicado em transaç
 com comparação do conteúdo anterior de cursos e tarefas: preservado. O teste de
 navegador também validou edição, filtro, adição pelo menu e pelo plano, etapa única
 com prazo e acesso ao caderno. Nenhum dado de teste foi inserido no banco publicado.
+
+
+## Área de estudo no curso
+
+76 testes do backend e oito do frontend aprovados. Migração 20261103-area-do-curso.sql
+conferida repetidamente no PostgreSQL isolado, preservando curso anterior. A nova FK
+usa AreaEstudo existente. A limpeza dos testes remove cursos antes de áreas, respeitando
+a relação. Produção exige essa migração aditiva antes de publicar o backend.
+
+A migração de área do curso foi aplicada ao PostgreSQL publicado em transação, com comparação do conteúdo anterior dos cursos: preservado. O contexto prod/validate também iniciou no PostgreSQL local após a migração.

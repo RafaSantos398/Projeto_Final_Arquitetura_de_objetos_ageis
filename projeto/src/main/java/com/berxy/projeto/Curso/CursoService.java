@@ -28,14 +28,32 @@ public class CursoService {
     }
 
     public Curso criarPessoal(CursoPessoalRequest dados) {
-        return repository.save(Curso.pessoal(atual(), dados));
+        Curso curso = Curso.pessoal(atual(), dados);
+        curso.definirAreaEstudo(resolverArea(dados.areaEstudoId(), dados.areaEstudoNome()));
+        return repository.save(curso);
     }
 
     public Curso atualizarPessoal(Long id, CursoPessoalRequest dados) {
         Curso curso = buscar(id);
         if (!curso.isPessoal()) throw new IllegalArgumentException("Use a administração para editar o catálogo.");
         curso.atualizarPessoal(dados);
+        curso.definirAreaEstudo(resolverArea(dados.areaEstudoId(), dados.areaEstudoNome()));
         return repository.save(curso);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.berxy.projeto.AreaEstudo.AreaEstudoRepository areas;
+
+    private com.berxy.projeto.AreaEstudo.AreaEstudo resolverArea(Long id, String nome) {
+        String texto = nome == null ? null : nome.strip();
+        if (texto != null && texto.isEmpty()) texto = null;
+        if (id != null && texto != null) throw new IllegalArgumentException("Escolha uma área existente ou informe uma nova, não ambas.");
+        if (id != null) return areas.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Área de estudo não encontrada."));
+        if (texto == null) return null;
+        com.berxy.projeto.AreaEstudo.AreaEstudo nova = new com.berxy.projeto.AreaEstudo.AreaEstudo(texto, null);
+        var existente = areas.findFirstByNomeIgnoreCaseOrderByIdAsc(nova.getNome());
+        return existente.isPresent() ? existente.get() : areas.save(nova);
     }
 
     private final CursoRepository repository;
@@ -78,6 +96,7 @@ public class CursoService {
                 instituicao, dados.nome(), dados.descricao(),
                 dados.tipoIntercambio(), dados.idioma(), dados.duracaoMeses()
         );
+        curso.definirAreaEstudo(resolverArea(dados.areaEstudoId(), dados.areaEstudoNome()));
         return repository.save(curso);
     }
 
@@ -89,6 +108,7 @@ public class CursoService {
                 instituicao, dados.nome(), dados.descricao(),
                 dados.tipoIntercambio(), dados.idioma(), dados.duracaoMeses()
         );
+        curso.definirAreaEstudo(resolverArea(dados.areaEstudoId(), dados.areaEstudoNome()));
         return repository.save(curso);
     }
 
