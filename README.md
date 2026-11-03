@@ -102,11 +102,6 @@ personalizado da geração por tema. A restrição única do banco continua impe
 um conflito simultâneo pode retornar 409 e deve ser resolvido recarregando e tentando novamente.
 Os records já adotados em ModeloTarefa foram preservados conforme orientação do projeto.
 
-O material da disciplina orienta as escolhas técnicas. Isso não substitui a regra de
-autoria da rubrica: o backend recebeu assistência de IA, inclusive implementação.
-O grupo deve tratar essa participação com transparência e alinhar a entrega ao professor;
-refatorar o código não altera sua origem. [Revisão completa](docs/REVISAO-ESCOPO.md).
-
 ## Limites conhecidos
 
 Não há catálogo completo de bolsas, recomendação automática de cursos, cotações de
